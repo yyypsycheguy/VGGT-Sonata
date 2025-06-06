@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import matplotlib.pyplot as plt
+from scipy.spatial import ConvexHull
+from scipy.stats import zscore
 import numpy as np
 import open3d as o3d
 import torch
 import torch.nn as nn
-
 import sonata
+from sklearn.cluster import DBSCAN
 
 try:
     import flash_attn
@@ -239,3 +241,92 @@ if __name__ == "__main__":
         np.array([0.0, 1.0, 0.0]).reshape(1, 3)
     )  # green color for floor
     o3d.visualization.draw_geometries([floor_pcd])
+
+
+    # ------------ Compute convex hull (borders) of floor points ------------
+
+    def filter_largest_cluster(points_2d: np.ndarray, eps=0.2, min_samples=10) -> np.ndarray:
+        """
+        Removes all but the largest cluster of 2D points using DBSCAN.
+
+        Args:
+            points_2d (np.ndarray): [N, 2] array of 2D (x, z) points.
+            eps (float): DBSCAN neighborhood radius.
+            min_samples (int): Minimum number of points per cluster.
+
+        Returns:
+            np.ndarray: Filtered points belonging to the largest cluster.
+        """
+        clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(points_2d)
+        labels = clustering.labels_
+
+        # -1 is noise in DBSCAN
+        unique_labels, counts = np.unique(labels[labels != -1], return_counts=True)
+
+        if len(counts) == 0:
+            raise ValueError("No valid clusters found by DBSCAN.")
+
+        largest_cluster_label = unique_labels[np.argmax(counts)]
+        largest_cluster_mask = labels == largest_cluster_label
+        return points_2d[largest_cluster_mask]
+
+
+    def extract_floor_trajectory(floor_points_3d: np.ndarray, zscore_threshold=1.5, show_plot=True, save_path="floor_trajectory.png"):
+        """
+        Extracts the border trajectory of the floor from 3D points with outlier removal.
+
+        Args:
+            floor_points_3d (np.ndarray): Nx3 array of 3D (x, y, z) floor points.
+            zscore_threshold (float): Z-score threshold for filtering outliers.
+            show_plot (bool): Whether to plot the result.
+            save_path (str or None): If set, saves the figure to this path.
+
+        Returns:
+            trajectory_2d (np.ndarray): Mx2 array of 2D (x, z) border points.
+        """
+        # Project to 2D (X-Z plane)
+        floor_points_2d = floor_points_3d[:, :2]  # shape: [N, 2]
+        print(f"Floor points shape: {floor_points_2d.shape}")
+        print(f"Floor points (first 5): {floor_points_2d[:5]}")
+
+        # Remove outliers using z-score
+        zs = zscore(floor_points_2d, axis=0)
+        mask = np.all(np.abs(zs) < zscore_threshold, axis=1)
+        filtered_points = floor_points_2d[mask]
+
+        filtered_points = filter_largest_cluster(filtered_points, eps=0.1, min_samples=10)
+        print(f"Filtered points shape: {filtered_points.shape}")
+
+        if len(filtered_points) < 3:
+            raise ValueError("Not enough inlier points after filtering for convex hull.")
+
+        # Compute convex hull on filtered data
+        hull = ConvexHull(filtered_points)
+        trajectory_2d = filtered_points[hull.vertices]
+
+
+        if show_plot:
+            plt.figure(figsize=(8, 6))
+            plt.plot(floor_points_2d[:, 0], floor_points_2d[:, 1], 'go', alpha=0.2, label='Raw Points')
+            plt.plot(filtered_points[:, 0], filtered_points[:, 1], 'bo', alpha=0.4, label='Filtered Points')
+            plt.plot(np.append(trajectory_2d[:, 0], trajectory_2d[0, 0]),
+                    np.append(trajectory_2d[:, 1], trajectory_2d[0, 1]),
+                    'r-', lw=2, label='Trajectory (Convex Hull)')
+            plt.fill(trajectory_2d[:, 0], trajectory_2d[:, 1], 'r', alpha=0.1)
+            plt.title("Floor Border Trajectory (After Outlier Removal)")
+            plt.xlabel("X (horizontal)")
+            plt.ylabel("Z (vertical)")
+            #plt.axis('equal')
+            plt.grid(True)
+            plt.legend()
+            if save_path:
+                plt.savefig(save_path)
+                print(f"Plot saved to {save_path}")
+            plt.close()
+
+        return trajectory_2d
+
+
+    trajectory = extract_floor_trajectory(floor_points)
+    print("Trajectory points (X-Z):")
+    print(trajectory)
