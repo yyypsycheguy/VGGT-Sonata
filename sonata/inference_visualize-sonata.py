@@ -128,17 +128,6 @@ class SegHead(nn.Module):
         return self.seg_head(x)
 
 
-def normal_from_cross_product(points_2d: np.ndarray) -> np.ndarray:
-    xyz_points_pad = np.pad(points_2d, ((0, 1), (0, 1), (0, 0)), mode="symmetric")
-    xyz_points_ver = (xyz_points_pad[:, :-1, :] - xyz_points_pad[:, 1:, :])[:-1, :, :]
-    xyz_points_hor = (xyz_points_pad[:-1, :, :] - xyz_points_pad[1:, :, :])[:, :-1, :]
-    xyz_normal = np.cross(xyz_points_hor, xyz_points_ver)
-    xyz_dist = np.linalg.norm(xyz_normal, axis=-1, keepdims=True)
-    xyz_normal = np.divide(
-        xyz_normal, xyz_dist, out=np.zeros_like(xyz_normal), where=xyz_dist != 0
-    )
-    return xyz_normal
-
 
 if __name__ == "__main__":
     # set random seed
@@ -231,3 +220,22 @@ if __name__ == "__main__":
     torch.save(point, "results.pt")
     print("Results saved to results.pt")
     print(point.keys())
+    #print(point)
+
+    # ------------ get the floor points ------------
+    floor_points = []
+    coords_array = point["coord"].cpu().detach().numpy()
+    for i, coords in enumerate(coords_array):
+        if name[i] == "floor":
+            floor_points.append(coords)
+    floor_points = np.array(floor_points)
+    print(f"Found {len(floor_points)} floor points")
+    print(f"Floor points: {np.unique(floor_points, axis=0)}")
+
+    #show visualisation
+    floor_pcd = o3d.geometry.PointCloud()
+    floor_pcd.points = o3d.utility.Vector3dVector(floor_points)
+    floor_pcd.colors = o3d.utility.Vector3dVector(
+        np.array([0.0, 1.0, 0.0]).reshape(1, 3)
+    )  # green color for floor
+    o3d.visualization.draw_geometries([floor_pcd])

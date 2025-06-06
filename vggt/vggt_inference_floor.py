@@ -70,7 +70,7 @@ with torch.no_grad():
     track_list, vis_score, conf_score = model.track_head(aggregated_tokens_list, images, ps_idx, query_points=query_points[None])
 
 
-def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=3.0, confidence_threshold=0.01, floor_height=0.45):
+def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=3.0, confidence_threshold=0.01, floor_height=0.5):
     import numpy as np
     import torch
 
