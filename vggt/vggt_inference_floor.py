@@ -70,7 +70,7 @@ with torch.no_grad():
     track_list, vis_score, conf_score = model.track_head(aggregated_tokens_list, images, ps_idx, query_points=query_points[None])
 
 
-def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=3.0, confidence_threshold=0.01, floor_height=0.5):
+def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=3.0, confidence_threshold=0.01, floor_height=0.0000001):
     import numpy as np
     import torch
 
@@ -82,7 +82,8 @@ def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=3.0, 
         normals = np.divide(normals, norms, out=np.zeros_like(normals), where=norms != 0)
         return normals  # [H-1, W-1, 3]
 
-    S, H, W, _ = point_map_by_unprojection.shape
+    S, H, W, _ = point_map_by_unprojection.shape # S, H, W, 3
+    print(f"Point map shape: {point_map_by_unprojection.shape}")
     H_valid = H - 1
     W_valid = W - 1
     coords_cropped = []
@@ -106,6 +107,7 @@ def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=3.0, 
     print(f"Total points: {coords_all.shape[0]}")
     normals_all = np.concatenate(normals_list, axis=0)
     colors_all = np.concatenate(colors_cropped, axis=0)
+    print(f"Coords all:{coords_all}, coords_all shape: {coords_all.shape}")
 
 
     # Height mask
