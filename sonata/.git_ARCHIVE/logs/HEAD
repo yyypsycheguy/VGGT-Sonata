@@ -1,0 +1,8 @@
+0000000000000000000000000000000000000000 711030f19f5f617e27a23ca16929a0f0b4d950b1 haixuanTao <tao.xavier@outlook.com> 1748360000 +0200	clone: from https://github.com/facebookresearch/sonata.git
+711030f19f5f617e27a23ca16929a0f0b4d950b1 323dbd5590da148efa3020ec3d1924c6150d9bd5 haixuanTao <tao.xavier@outlook.com> 1748447011 +0200	commit: pipeline defined
+323dbd5590da148efa3020ec3d1924c6150d9bd5 24d3f1e091017d037f8e33c1180ff6597dffcbe0 haixuanTao <tao.xavier@outlook.com> 1748605360 +0200	commit: bash workflow automized
+24d3f1e091017d037f8e33c1180ff6597dffcbe0 c4b7e68a2b3bfed8703b217f077d250503ff9047 haixuanTao <tao.xavier@outlook.com> 1748960251 +0200	commit: minor improvments
+c4b7e68a2b3bfed8703b217f077d250503ff9047 62168c353c336f886d6e1cf2db2b395131c6130f haixuanTao <tao.xavier@outlook.com> 1749130254 +0200	commit: sonata done but bad quality
+62168c353c336f886d6e1cf2db2b395131c6130f 8ac5119aae0e6188441412963a450117d975be10 haixuanTao <tao.xavier@outlook.com> 1749136592 +0200	commit: modification in bash script
+8ac5119aae0e6188441412963a450117d975be10 0000000000000000000000000000000000000000 haixuanTao <tao.xavier@outlook.com> 1749200938 +0200	Branch: renamed refs/heads/main to refs/heads/main
+8ac5119aae0e6188441412963a450117d975be10 8ac5119aae0e6188441412963a450117d975be10 haixuanTao <tao.xavier@outlook.com> 1749200938 +0200	Branch: renamed refs/heads/main to refs/heads/main

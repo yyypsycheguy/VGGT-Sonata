@@ -1,0 +1,11 @@
+0000000000000000000000000000000000000000 22d5c18fe6a99aef16b37a863f458935cf7b3120 haixuanTao <tao.xavier@outlook.com> 1748250681 +0200	clone: from github.com:facebookresearch/vggt.git
+22d5c18fe6a99aef16b37a863f458935cf7b3120 7a1adda7851418b33f7b316b13d1a98263765e71 haixuanTao <tao.xavier@outlook.com> 1748266590 +0200	commit: vggt pipeline init
+7a1adda7851418b33f7b316b13d1a98263765e71 5497c045944dab8030bb51a0155cae92354fac4f haixuanTao <tao.xavier@outlook.com> 1748268299 +0200	commit: SpatialML raw added
+5497c045944dab8030bb51a0155cae92354fac4f 0d0c72d19a7471cfe3a33d2086b1db52ecd34ea6 haixuanTao <tao.xavier@outlook.com> 1748268835 +0200	commit: SpatialLM separated
+0d0c72d19a7471cfe3a33d2086b1db52ecd34ea6 cfa0da6397e73c50b0787b803ed256dff96a5c54 haixuanTao <tao.xavier@outlook.com> 1748358732 +0200	commit: workflow established
+cfa0da6397e73c50b0787b803ed256dff96a5c54 1b54d1cd5790e3d073e1b6dee509fb9edcfb2f8a haixuanTao <tao.xavier@outlook.com> 1748447053 +0200	commit: pipeline defined
+1b54d1cd5790e3d073e1b6dee509fb9edcfb2f8a 1b54d1cd5790e3d073e1b6dee509fb9edcfb2f8a haixuanTao <tao.xavier@outlook.com> 1749028202 +0200	Branch: renamed refs/heads/main to refs/heads/main
+1b54d1cd5790e3d073e1b6dee509fb9edcfb2f8a befdcef476b4896a8fdf59128868bcdfa63eca8f haixuanTao <tao.xavier@outlook.com> 1749028486 +0200	commit: vggt inference
+befdcef476b4896a8fdf59128868bcdfa63eca8f 2d53428c70f5263fa2bb37e3d1f39992993f96e0 haixuanTao <tao.xavier@outlook.com> 1749130622 +0200	commit: vggt done
+2d53428c70f5263fa2bb37e3d1f39992993f96e0 c27931390b7f6d698d1b55c28d0c8520938080d2 haixuanTao <tao.xavier@outlook.com> 1749136714 +0200	commit: accuracy well increased
+c27931390b7f6d698d1b55c28d0c8520938080d2 f158cd3d49d45e2b2703d3f4bc1e5e5338b23d90 haixuanTao <tao.xavier@outlook.com> 1749200819 +0200	commit: documentation updated

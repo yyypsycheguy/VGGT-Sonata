@@ -1,0 +1,7 @@
+# pack-refs with: peeled fully-peeled sorted 
+8c14e0644d851b18ae25a069a41c135c85f3401b refs/remotes/origin/eval_wip
+a4deda5d2b2ca04a6e13c803f88740fcb8597262 refs/remotes/origin/evaluation
+22d5c18fe6a99aef16b37a863f458935cf7b3120 refs/remotes/origin/main
+249e729b1e1547473a9c6a908fe1340ee41efe7f refs/remotes/origin/pip_package
+f74c1f68581f4b491f3e3269100b40b8217ce427 refs/remotes/origin/save_my_life
+4d9f4be1e85c44efda107828ec9a09535820bdfc refs/remotes/origin/training
