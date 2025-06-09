@@ -12,15 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import matplotlib.pyplot as plt
-from scipy.spatial import ConvexHull
-from scipy.stats import zscore
+
 import numpy as np
 import open3d as o3d
 import torch
 import torch.nn as nn
 import sonata
+
 from sklearn.cluster import DBSCAN
+import matplotlib.pyplot as plt
+from scipy.spatial import ConvexHull
+from scipy.stats import zscore
+from shapely.geometry import Polygon
+
+from shapely.geometry import Polygon, MultiLineString
+from shapely.ops import unary_union, polygonize
+from scipy.spatial import Delaunay
+from shapely.geometry import MultiPoint
+from shapely.ops import triangulate
+
+import concavity
+from concavity.utils import *
 
 try:
     import flash_attn
@@ -245,7 +257,7 @@ if __name__ == "__main__":
 
     # ------------ Compute convex hull (borders) of floor points ------------
 
-    def filter_largest_cluster(points_2d: np.ndarray, eps=0.2, min_samples=10) -> np.ndarray:
+    def filter_largest_cluster(points_2d: np.ndarray, eps=0.2, min_samples=30) -> np.ndarray:
         """
         Removes all but the largest cluster of 2D points using DBSCAN.
 
@@ -270,6 +282,41 @@ if __name__ == "__main__":
         largest_cluster_mask = labels == largest_cluster_label
         return points_2d[largest_cluster_mask]
 
+    def alpha_shape(points, alpha=0.0001):
+        """
+        Compute the alpha shape (concave hull) of a set of 2D points.
+        Args:
+            points (np.ndarray): Nx2 array of (x, z) coordinates.
+            alpha (float): Alpha value to control the detail. Smaller = tighter shape.
+        Returns:
+            shapely.geometry.Polygon: The resulting concave polygon.
+        """
+        from shapely.geometry import Polygon, MultiLineString
+        from shapely.ops import unary_union, polygonize
+        from scipy.spatial import Delaunay
+
+        if len(points) < 4:
+            return MultiPoint(points).convex_hull
+
+        tri = Delaunay(points)
+        triangles = points[tri.simplices]
+        
+        a_shape_edges = []
+        for tri_coords in triangles:
+            a, b, c = tri_coords
+            len_ab = np.linalg.norm(a - b)
+            len_bc = np.linalg.norm(b - c)
+            len_ca = np.linalg.norm(c - a)
+            s = (len_ab + len_bc + len_ca) / 2.0
+            area = np.sqrt(s * (s - len_ab) * (s - len_bc) * (s - len_ca))
+            circum_r = len_ab * len_bc * len_ca / (4.0 * area + 1e-8)
+
+            if circum_r < 1.0 / alpha:
+                a_shape_edges += [(tuple(a), tuple(b)), (tuple(b), tuple(c)), (tuple(c), tuple(a))]
+
+        m = MultiLineString(a_shape_edges)
+        polygons = list(polygonize(unary_union(m)))
+        return unary_union(polygons)
 
     def extract_floor_trajectory(floor_points_3d: np.ndarray, zscore_threshold=1.5, show_plot=True, save_path="floor_trajectory.png"):
         """
@@ -286,8 +333,6 @@ if __name__ == "__main__":
         """
         # Project to 2D (X-Z plane)
         floor_points_2d = floor_points_3d[:, :2]  # shape: [N, 2]
-        print(f"Floor points shape: {floor_points_2d.shape}")
-        print(f"Floor points (first 5): {floor_points_2d[:5]}")
 
         # Remove outliers using z-score
         zs = zscore(floor_points_2d, axis=0)
@@ -299,10 +344,25 @@ if __name__ == "__main__":
 
         if len(filtered_points) < 3:
             raise ValueError("Not enough inlier points after filtering for convex hull.")
+        
+        trajectory_2d = concavity.concave_hull(filtered_points, 50)
+        trajectory_2d = trajectory_2d.buffer(-0.27)
+        trajectory_2d = np.array(trajectory_2d.exterior.coords)
 
-        # Compute convex hull on filtered data
+        '''trajectory_2d = alpha_shape(filtered_points, alpha=0.000000001)
+        poly = Polygon(trajectory_2d)
+        trajectory_2d = poly.buffer(-0.4)
+        trajectory_2d = np.array(trajectory_2d.exterior.coords)'''
+
+        '''# Compute convex hull on filtered data
         hull = ConvexHull(filtered_points)
         trajectory_2d = filtered_points[hull.vertices]
+        print(f"hull vertices shape: {trajectory_2d.shape}")
+        print(f"hull vertices:{trajectory_2d}")
+        # add buffer to vertices
+        poly = Polygon(trajectory_2d)
+        trajectory_2d = poly.buffer(-0.4)
+        trajectory_2d = np.array(trajectory_2d.exterior.coords)'''
 
 
         if show_plot:
@@ -311,11 +371,11 @@ if __name__ == "__main__":
             plt.plot(filtered_points[:, 0], filtered_points[:, 1], 'bo', alpha=0.4, label='Filtered Points')
             plt.plot(np.append(trajectory_2d[:, 0], trajectory_2d[0, 0]),
                     np.append(trajectory_2d[:, 1], trajectory_2d[0, 1]),
-                    'r-', lw=2, label='Trajectory (Convex Hull)')
+                    'r-', lw=2, label='Trajectory')
             plt.fill(trajectory_2d[:, 0], trajectory_2d[:, 1], 'r', alpha=0.1)
             plt.title("Floor Border Trajectory (After Outlier Removal)")
-            plt.xlabel("X (horizontal)")
-            plt.ylabel("Z (vertical)")
+            plt.xlabel("X (forward)")
+            plt.ylabel("Z (right)")
             #plt.axis('equal')
             plt.grid(True)
             plt.legend()
