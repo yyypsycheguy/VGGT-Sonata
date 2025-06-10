@@ -21,15 +21,7 @@ import sonata
 
 from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
-from scipy.spatial import ConvexHull
-from scipy.stats import zscore
-from shapely.geometry import Polygon
-
-from shapely.geometry import Polygon, MultiLineString
-from shapely.ops import unary_union, polygonize
-from scipy.spatial import Delaunay
 from shapely.geometry import MultiPoint
-from shapely.ops import triangulate
 
 import concavity
 from concavity.utils import *
@@ -323,7 +315,7 @@ if __name__ == "__main__":
         Extracts the border trajectory of the floor from 3D points with outlier removal.
 
         Args:
-            floor_points_3d (np.ndarray): Nx3 array of 3D (x, y, z) floor points.
+            floor_points_3d (np.ndarray): Nx3 array of 3D (x, y, z) (right, forward, up) floor points.
             zscore_threshold (float): Z-score threshold for filtering outliers.
             show_plot (bool): Whether to plot the result.
             save_path (str or None): If set, saves the figure to this path.
@@ -331,8 +323,8 @@ if __name__ == "__main__":
         Returns:
             trajectory_2d (np.ndarray): Mx2 array of 2D (x, z) border points.
         """
-        # Project to 2D (X-Z plane)
-        floor_points_2d = floor_points_3d[:, :2]  # shape: [N, 2]
+        # Project to 2D (X-Y plane)
+        floor_points_2d = floor_points_3d[:, :2]  # shape: [N, 2] [X,Y]
 
         # Remove outliers using z-score
         zs = zscore(floor_points_2d, axis=0)
@@ -349,21 +341,6 @@ if __name__ == "__main__":
         trajectory_2d = trajectory_2d.buffer(-0.27)
         trajectory_2d = np.array(trajectory_2d.exterior.coords)
 
-        '''trajectory_2d = alpha_shape(filtered_points, alpha=0.000000001)
-        poly = Polygon(trajectory_2d)
-        trajectory_2d = poly.buffer(-0.4)
-        trajectory_2d = np.array(trajectory_2d.exterior.coords)'''
-
-        '''# Compute convex hull on filtered data
-        hull = ConvexHull(filtered_points)
-        trajectory_2d = filtered_points[hull.vertices]
-        print(f"hull vertices shape: {trajectory_2d.shape}")
-        print(f"hull vertices:{trajectory_2d}")
-        # add buffer to vertices
-        poly = Polygon(trajectory_2d)
-        trajectory_2d = poly.buffer(-0.4)
-        trajectory_2d = np.array(trajectory_2d.exterior.coords)'''
-
 
         if show_plot:
             plt.figure(figsize=(8, 6))
@@ -374,8 +351,8 @@ if __name__ == "__main__":
                     'r-', lw=2, label='Trajectory')
             plt.fill(trajectory_2d[:, 0], trajectory_2d[:, 1], 'r', alpha=0.1)
             plt.title("Floor Border Trajectory (After Outlier Removal)")
-            plt.xlabel("X (forward)")
-            plt.ylabel("Z (right)")
+            plt.xlabel("Y (forward)")
+            plt.ylabel("X(right)")
             #plt.axis('equal')
             plt.grid(True)
             plt.legend()
@@ -388,5 +365,5 @@ if __name__ == "__main__":
 
 
     trajectory = extract_floor_trajectory(floor_points)
-    print("Trajectory points (X-Z):")
+    print("Trajectory points (X-Y):")
     print(trajectory)
