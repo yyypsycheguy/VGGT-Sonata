@@ -33,17 +33,17 @@ with torch.no_grad():
                 
     # Predict Cameras
     pose_enc = model.camera_head(aggregated_tokens_list)[-1]
+
     # Extrinsic and intrinsic matrices, following OpenCV convention (camera from world)
     extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
-
     B, V = extrinsic.shape[:2]  # [1, 6, 3, 4]
     extrinsic_homo = torch.eye(4, device=device).repeat(B, V, 1, 1)  # [1, 6, 4, 4]
     extrinsic_homo[:, :, :3, :] = extrinsic
 
     transformation = torch.eye(4, device=device)         
     transformation = torch.tensor([
-    [1,  0,  0, 0],  # x 
-    [0,  0,  -1, 0],  # z
+    [1,  0,  0, 0],  # x right
+    [0,  0,  -1, 0],  # z 
     [0,  -1, 0, 0],  # y
     [0,  0,  0, 1],
 ], dtype=torch.float32, device=extrinsic.device) 
@@ -69,8 +69,21 @@ with torch.no_grad():
                                         [60.72, 259.94]]).to(device)
     track_list, vis_score, conf_score = model.track_head(aggregated_tokens_list, images, ps_idx, query_points=query_points[None])
 
+    vggt_raw_output = {
+        "world_points": point_map_by_unprojection,
+        "depth_map": depth_map,
+        "depth_conf": depth_conf,
+        "point_map": point_map,
+        "point_conf": point_conf,
+        "extrinsic": extrinsic,
+        "intrinsic": intrinsic,
+    }
+    torch.save(vggt_raw_output, "vggt_raw_output.pt")
+    print(f"word points shape: {point_map_by_unprojection.shape}")
+    print("Raw output saved to vggt_raw_output.pt, prepared for scene relocation...\n")
 
-def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=3.0, confidence_threshold=0.01, floor_height=0.0000001):
+
+def convert_vggt_to_sonata(point_map_by_unprojection, images= not None, scale_factor=3.0, confidence_threshold=0.01, floor_height=0.0000001):
     import numpy as np
     import torch
 
@@ -83,7 +96,6 @@ def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=3.0, 
         return normals  # [H-1, W-1, 3]
 
     S, H, W, _ = point_map_by_unprojection.shape # S, H, W, 3
-    print(f"Point map shape: {point_map_by_unprojection.shape}")
     H_valid = H - 1
     W_valid = W - 1
     coords_cropped = []
@@ -104,7 +116,6 @@ def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=3.0, 
             colors_cropped.append(color)
 
     coords_all = np.concatenate(coords_cropped, axis=0)
-    print(f"Total points: {coords_all.shape[0]}")
     normals_all = np.concatenate(normals_list, axis=0)
     colors_all = np.concatenate(colors_cropped, axis=0)
     print(f"Coords all:{coords_all}, coords_all shape: {coords_all.shape}")
