@@ -31,7 +31,7 @@ def relocate_scene(image, data=torch.load("vggt_raw_output.pt")):
 
 def get_coord(world_points):
     """Convert one single selected image vggt world points to SONATA coordinates."""
-    # world_points should now be [1, H, W, 3] which is what convert_vggt_to_sonata expects
+
     coords = convert_vggt_to_sonata(world_points, images=images)
     coords = coords["coord"].cpu().numpy()
 
