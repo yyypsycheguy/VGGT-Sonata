@@ -32,11 +32,12 @@ def cam_pose_finder(images, data=torch.load("vggt_raw_output.pt")):
         intrinsic, 
         image_size_hw, 
     )
+    cam_pose = cam_pose.squeeze(0)  # Remove batch dimension
+    cam_pose = cam_pose.to(device) 
+    print(f"Original camera pose shape: {cam_pose.shape}, {cam_pose}")
 
     return cam_pose
 
-
-total_img = len(image_names)
 
 def pose_to_coords(pose, img_index):
     '''
@@ -44,23 +45,31 @@ def pose_to_coords(pose, img_index):
           img_index = image index in the series
     Returns: coordinates realtive to the origin (first image in the series).
     Convert camera pose to 3D coordinates.'''
+    total_img = len(image_names)
 
-    cam_position = pose[:, :3]  # Bx3 (x,y,z)
+    cam_position = pose[:,:3]  # Bx3 (x,y,z)
+    print(f"Camera 2D (x,y) position shape: {cam_position.shape}")
     if img_index > total_img-1 or img_index < 0:
         raise ValueError(f"Image index {img_index} is out of range. Please provide a valid index between 0 and {total_img - 1}.")
     else:
-        cam_position = cam_position[img_index] 
-        cam_position = cam_position[:, :2] #2D  (x,y)
+        cam_position = cam_position[img_index,:2] #2D  (x,y)
         T = cam_position.cpu().numpy() 
         T = torch.tensor(T, dtype=torch.float32).to(device)  
 
-    return T
+    return T    
 
 if __name__ == "__main__":
     cam_pose = cam_pose_finder(images)
+    total_img = len(image_names)
     img_index = 0
     coords = pose_to_coords(cam_pose, img_index=img_index)
-    print(f"Camera pose of img {img_index}, coord shape {coords.shape} is {coords}")
+    print(f"\nCamera pose of img {img_index}/{total_img}, (x,y) coord shape {coords.shape} is {coords}")
 
     torch.save(coords, f"cam_pose_coords_img{img_index}.pt")
     print(f"Camera pose of img {img_index} saved to vggt_cam_pose.pt")
+
+    coords4 = pose_to_coords(cam_pose, img_index=4)
+    print(f"Camera pose of img 4, coord is {coords4}")
+
+    difference = coords4 - coords
+    print(f"Difference between img 4 and img 0 coordinates: {difference}")
