@@ -12,15 +12,28 @@ def cam_positions(data):
 
     print(f"Extrinsics shape: {extrinsic.shape}")
     coords = []
+    rotations_dict = {}
+    translations_dict = {}
+
     for img_id in tqdm(img_ids):
         cam2world_3x4 = extrinsic[img_id].cpu().numpy()
         T_world_camera = viser_tf.SE3.from_matrix(cam2world_3x4)
-        T_world_camera = T_world_camera.wxyz_xyz[:4]  # Extract translation part
-        print(f"Camera {img_id} T_world_camera: {T_world_camera}")
+        
+        # Extract rotation (wxyz) and translation (xyz)
+        rotation = T_world_camera.wxyz_xyz[:4]     # First 4 elements
+        translation = T_world_camera.wxyz_xyz[4:]  # Last 3 elements
 
-        coords.append(T_world_camera)
+        # Store in dicts
+        rotations_dict[f"Camera_{img_id}"] = rotation
+        translations_dict[f"Camera_{img_id}"] = translation
 
-    torch.save(coords, 'cam_positions.pt')
+        print(f"Camera {img_id} rotation (wxyz): {rotation}")
+        print(f"Camera {img_id} translation (xyz): {translation}\n")
+
+        #print(f"Camera {img_id} T_world_camera: {T_world_camera}")
+        #coords.append(T_world_camera)
+
+    torch.save({'rotations': rotations_dict, 'translations': translations_dict}, 'cam_positions.pt')
     print("Camera positions saved to 'cam_positions.pt'")
 
 
