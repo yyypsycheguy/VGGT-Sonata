@@ -22,9 +22,11 @@ import sonata
 from sklearn.cluster import DBSCAN
 import matplotlib.pyplot as plt
 from shapely.geometry import MultiPoint
+from scipy.stats import zscore
 
 import concavity
 from concavity.utils import *
+from scipy.stats import zscore
 
 try:
     import flash_attn
@@ -365,5 +367,12 @@ if __name__ == "__main__":
 
 
     trajectory = extract_floor_trajectory(floor_points)
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
     print("Trajectory points (X-Y):")
-    print(trajectory)
+=======
+    print("Trajectory points (X-Y)")
+>>>>>>> Stashed changes
+=======
+    print("Trajectory points (X-Y)")
+>>>>>>> Stashed changes

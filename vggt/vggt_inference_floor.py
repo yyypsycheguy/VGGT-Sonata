@@ -50,6 +50,7 @@ with torch.no_grad():
     transformation = transformation[None, None, :, :]  # [1, 1, 4, 4]
     extrinsic = extrinsic_homo @ transformation
     extrinsic = extrinsic[:,:,:3,:]
+    print(extrinsic)
 
     # Predict Depth Maps
     depth_map, depth_conf = model.depth_head(aggregated_tokens_list, images, ps_idx)
@@ -83,7 +84,7 @@ with torch.no_grad():
     print("Raw output saved to vggt_raw_output.pt, prepared for scene relocation...\n")
 
 
-def convert_vggt_to_sonata(point_map_by_unprojection, images= not None, scale_factor=3.0, confidence_threshold=0.01, floor_height=0.0000001):
+def convert_vggt_to_sonata(point_map_by_unprojection, images= not None, scale_factor=3.0, floor_height=0.0000001):
     import numpy as np
     import torch
 
@@ -149,3 +150,10 @@ torch.save(sonata_data, "predictions.pt")
 
 print(sonata_data.keys())
 print("Sonata formatted predictions saved to predictions.pt")
+
+print({"coord": sonata_data["coord"].shape,
+       "normal": sonata_data["normal"].shape,
+       "color": sonata_data["color"].shape})
+
+#print(sonata_data["coord"])
+

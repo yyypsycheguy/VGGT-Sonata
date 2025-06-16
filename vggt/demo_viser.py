@@ -162,9 +162,13 @@ def viser_wrapper(
                     client.camera.position = frame.position
 
         img_ids = range(S)
+        
+
+        print(f"Extrinsics shape: {extrinsics.shape}")
         for img_id in tqdm(img_ids):
             cam2world_3x4 = extrinsics[img_id]
             T_world_camera = viser_tf.SE3.from_matrix(cam2world_3x4)
+            print(f"Camera {img_id} T_world_camera: {T_world_camera}")
 
             # Add a small frame axis
             frame_axis = server.scene.add_frame(
@@ -176,6 +180,7 @@ def viser_wrapper(
                 origin_radius=0.002,
             )
             frames.append(frame_axis)
+            #print(f"with position {frame_axis.position}")
 
             # Convert the image for the frustum
             img = images_[img_id]  # shape (3, H, W)

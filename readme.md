@@ -1,7 +1,20 @@
 <h1>Pipeline connecting VGGT and Sonata inference<h1>
+This repository proposes a pipeline that enables 3D scene reconstruction from one single image or a video, with a simple RBG camera, then using this to achieve semantic segmentation of objects seen in the video. The floor is segmented in green from the 3D prediction a 2D projection of possible trajectory is predicted for robots to move and trace. It does this by running VGGT model inference and feeds the output into Sonata after data transformation which then does the segmentation. We also propose relocalising the camera position given a specific image in the series extracted from the video.
 
-# To run the pipeline separately:
+## Run the entire pipeline
+3D reconstruction -> semantic segmentation -> 2D floor projection & trajectory 
+```
+cd sonata
+./bash-command.sh
+```
+To run camera relocalisation:
+```
+cd vggt
+source .venv/bin/activate
+uv run cam_pose_prediction.py
+```
 
+## To run the model inference separately:
 Run vggt inference:
 
 ```
@@ -12,7 +25,6 @@ uv run vggt_inference.py
 Run Viser 3D viewer:
 
 ```
-python demo_viser.py --image_folder path/to/your/images/folder
 uv run python demo_viser.py --image_folder images
 ```
 
@@ -28,12 +40,6 @@ export PYTHONPATH=./
 uv run inference_visualize-sonata.py
 ```
 
-Run the entire pipeline
-
-```
-cd sonata
-./bash-command.sh
-```
 
 # Set up for VGGT & Sonata
 

@@ -207,6 +207,7 @@ def predictions_to_glb(
             current_color = tuple(int(255 * x) for x in rgba_color[:3])
 
             integrate_camera_into_scene(scene_3d, camera_to_world, current_color, scene_scale)
+            print(f"World to camera: {world_to_camera}")
 
     # Align scene to the observation of the first camera
     scene_3d = apply_scene_alignment(scene_3d, extrinsics_matrices)
@@ -220,10 +221,10 @@ def integrate_camera_into_scene(scene: trimesh.Scene, transform: np.ndarray, fac
     Integrates a fake camera mesh into the 3D scene.
 
     Args:
-        scene (trimesh.Scene): The 3D scene to add the camera model.
-        transform (np.ndarray): Transformation matrix for camera positioning.
-        face_colors (tuple): Color of the camera face.
-        scene_scale (float): Scale of the scene.
+        scene (trimesh.Scene): The 3D scene to add the camera model.--> point cloud data
+        transform (np.ndarray): Transformation matrix for camera positioning.--> extrinsic matrix
+        face_colors (tuple): Color of the camera face.--> (R, G, B) tuple with values in [0, 255].
+        scene_scale (float): Scale of the scene.--> measured by disgonal length of bounding box
     """
 
     cam_width = scene_scale * 0.05
