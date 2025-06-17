@@ -28,6 +28,10 @@ import concavity
 from concavity.utils import *
 from scipy.stats import zscore
 
+from shapely.geometry import Polygon, MultiLineString
+from shapely.ops import unary_union, polygonize
+from scipy.spatial import Delaunay
+
 try:
     import flash_attn
 except ImportError:
@@ -285,9 +289,6 @@ if __name__ == "__main__":
         Returns:
             shapely.geometry.Polygon: The resulting concave polygon.
         """
-        from shapely.geometry import Polygon, MultiLineString
-        from shapely.ops import unary_union, polygonize
-        from scipy.spatial import Delaunay
 
         if len(points) < 4:
             return MultiPoint(points).convex_hull
@@ -341,8 +342,12 @@ if __name__ == "__main__":
         
         trajectory_2d = concavity.concave_hull(filtered_points, 50)
         trajectory_2d = trajectory_2d.buffer(-0.27)
-        trajectory_2d = np.array(trajectory_2d.exterior.coords)
-
+        if trajectory_2d.geom_type == 'Polygon':
+            trajectory_2d = np.array(trajectory_2d.exterior.coords)
+        elif trajectory_2d.geom_type == 'MultiPolygon':
+            raise ValueError("Concave hull resulted in multiple polygons, please scan somewhere with less noise on the ground.")
+            #trajectory_2d = np.concatenate([np.array(poly.exterior.coords) for poly in trajectory_2d.geoms])
+        
 
         if show_plot:
             plt.figure(figsize=(8, 6))
@@ -367,12 +372,4 @@ if __name__ == "__main__":
 
 
     trajectory = extract_floor_trajectory(floor_points)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    print("Trajectory points (X-Y):")
-=======
     print("Trajectory points (X-Y)")
->>>>>>> Stashed changes
-=======
-    print("Trajectory points (X-Y)")
->>>>>>> Stashed changes

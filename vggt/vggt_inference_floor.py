@@ -36,10 +36,10 @@ with torch.no_grad():
 
     # Extrinsic and intrinsic matrices, following OpenCV convention (camera from world)
     extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
+
     B, V = extrinsic.shape[:2]  # [1, 6, 3, 4]
     extrinsic_homo = torch.eye(4, device=device).repeat(B, V, 1, 1)  # [1, 6, 4, 4]
     extrinsic_homo[:, :, :3, :] = extrinsic
-
     transformation = torch.eye(4, device=device)         
     transformation = torch.tensor([
     [1,  0,  0, 0],  # x right
@@ -47,10 +47,10 @@ with torch.no_grad():
     [0,  -1, 0, 0],  # y towards
     [0,  0,  0, 1],
 ], dtype=torch.float32, device=extrinsic.device) 
+    
     transformation = transformation[None, None, :, :]  # [1, 1, 4, 4]
-    extrinsic = extrinsic_homo @ transformation
-    extrinsic = extrinsic[:,:,:3,:]
-    print(extrinsic)
+    extrinsic_trans = extrinsic_homo @ transformation
+    extrinsic_trans = extrinsic[:,:,:3,:]
 
     # Predict Depth Maps
     depth_map, depth_conf = model.depth_head(aggregated_tokens_list, images, ps_idx)
@@ -61,7 +61,7 @@ with torch.no_grad():
     # Construct 3D Points from Depth Maps and Cameras
     # which usually leads to more accurate 3D points than point map branch
     point_map_by_unprojection = unproject_depth_map_to_point_map(depth_map.squeeze(0), 
-                                                                extrinsic.squeeze(0), 
+                                                                extrinsic_trans.squeeze(0), 
                                                                 intrinsic.squeeze(0))
 
     # Predict Tracks
@@ -78,8 +78,10 @@ with torch.no_grad():
         "point_conf": point_conf,
         "extrinsic": extrinsic,
         "intrinsic": intrinsic,
+        "images": images,
     }
     torch.save(vggt_raw_output, "vggt_raw_output.pt")
+    print(vggt_raw_output.keys())
     print(f"word points shape: {point_map_by_unprojection.shape}")
     print("Raw output saved to vggt_raw_output.pt, prepared for scene relocation...\n")
 
@@ -119,7 +121,7 @@ def convert_vggt_to_sonata(point_map_by_unprojection, images= not None, scale_fa
     coords_all = np.concatenate(coords_cropped, axis=0)
     normals_all = np.concatenate(normals_list, axis=0)
     colors_all = np.concatenate(colors_cropped, axis=0)
-    print(f"Coords all:{coords_all}, coords_all shape: {coords_all.shape}")
+    #print(f"Coords all:{coords_all}, coords_all shape: {coords_all.shape}")
 
 
     # Height mask

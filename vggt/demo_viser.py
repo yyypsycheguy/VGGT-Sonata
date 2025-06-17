@@ -93,9 +93,11 @@ def viser_wrapper(
     # Then flatten everything for the point cloud
     colors = images.transpose(0, 2, 3, 1)  # now (S, H, W, 3)
     S, H, W, _ = world_points.shape
+    print(f"World points shape: {world_points.shape}")
 
     # Flatten
     points = world_points.reshape(-1, 3)
+    print(f"Points shape: {points.shape}")
     colors_flat = (colors.reshape(-1, 3) * 255).astype(np.uint8)
     conf_flat = conf.reshape(-1)
 
@@ -163,8 +165,9 @@ def viser_wrapper(
 
         img_ids = range(S)
         
-
+        # ---------------- Visualize camera frames and frustums ----------------
         print(f"Extrinsics shape: {extrinsics.shape}")
+        print(f"extrinsics: {extrinsics}")
         for img_id in tqdm(img_ids):
             cam2world_3x4 = extrinsics[img_id]
             T_world_camera = viser_tf.SE3.from_matrix(cam2world_3x4)
@@ -200,6 +203,7 @@ def viser_wrapper(
             )
             frustums.append(frustum_cam)
             attach_callback(frustum_cam, frame_axis)
+        print(f"cam2world type: {type(cam2world_3x4)}")
 
     def update_point_cloud() -> None:
         """Update the point cloud based on current GUI selections."""
