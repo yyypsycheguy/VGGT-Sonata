@@ -378,6 +378,7 @@ def main():
     print("Converting pose encoding to extrinsic and intrinsic matrices...")
     extrinsic, intrinsic = pose_encoding_to_extri_intri(predictions["pose_enc"], images.shape[-2:])
     predictions["extrinsic"] = extrinsic
+    print(f"Extrinsic in main(): {extrinsic}")
     predictions["intrinsic"] = intrinsic
 
     print("Processing model outputs...")

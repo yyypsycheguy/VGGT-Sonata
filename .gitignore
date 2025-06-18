@@ -159,3 +159,5 @@ skyseg.onnx
 *.png
 images/
 video/
+
+graph.py

@@ -28,7 +28,9 @@ with torch.no_grad():
     with torch.amp.autocast("cuda", dtype=dtype):
         # Predict attributes including cameras, depth maps, and point maps.
         predictions = model(images)
+        
 print(f"prediction keys:{predictions.keys()}")
+
 def convert_vggt_to_sonata(predictions, scale_factor=3.0, confidence_threshold=0.01):
     import numpy as np
     import torch

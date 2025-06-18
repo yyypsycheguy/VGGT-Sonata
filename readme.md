@@ -1,4 +1,5 @@
-<h1>Pipeline connecting VGGT and Sonata inference<h1>
+## Pipeline connecting VGGT and Sonata inference: for spatial recognition
+
 This repository proposes a pipeline that enables 3D scene reconstruction from one single image or a video, with a simple RBG camera, then using this to achieve semantic segmentation of objects seen in the video. The floor is segmented in green from the 3D prediction a 2D projection of possible trajectory is predicted for robots to move and trace. It does this by running VGGT model inference and feeds the output into Sonata after data transformation which then does the segmentation. We also propose relocalising the camera position given a specific image in the series extracted from the video.
 
 ## Run the entire pipeline

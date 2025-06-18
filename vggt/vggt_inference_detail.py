@@ -25,52 +25,19 @@ for img in os.listdir("images"):
 
 images = load_and_preprocess_images(image_names).to(device)
 
-
 with torch.no_grad():
     with torch.cuda.amp.autocast(dtype=dtype):
-        images = images[None]  # add batch dimension
-        aggregated_tokens_list, ps_idx = model.aggregator(images)
-                
-    # Predict Cameras
-    pose_enc = model.camera_head(aggregated_tokens_list)[-1]
-    # Extrinsic and intrinsic matrices, following OpenCV convention (camera from world)
-    extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:])
+        # Predict attributes including cameras, depth maps, and point maps.
+        predictions = model(images)
 
-    B, V = extrinsic.shape[:2]  # [1, 6, 3, 4]
-    extrinsic_homo = torch.eye(4, device=device).repeat(B, V, 1, 1)  # [1, 6, 4, 4]
-    extrinsic_homo[:, :, :3, :] = extrinsic
-
-    transformation = torch.eye(4, device=device)         
-    transformation = torch.tensor([
-    [1,  0,  0, 0],  # x 
-    [0,  0,  -1, 0],  # z
-    [0,  -1, 0, 0],  # y
-    [0,  0,  0, 1],
-], dtype=torch.float32, device=extrinsic.device) 
-    transformation = transformation[None, None, :, :]  # [1, 1, 4, 4]
-    extrinsic = extrinsic_homo @ transformation
-    extrinsic = extrinsic[:,:,:3,:]
-
-    # Predict Depth Maps
-    depth_map, depth_conf = model.depth_head(aggregated_tokens_list, images, ps_idx)
-
-    # Predict Point Maps
-    point_map, point_conf = model.point_head(aggregated_tokens_list, images, ps_idx)
-        
-    # Construct 3D Points from Depth Maps and Cameras
-    # which usually leads to more accurate 3D points than point map branch
-    point_map_by_unprojection = unproject_depth_map_to_point_map(depth_map.squeeze(0), 
-                                                                extrinsic.squeeze(0), 
-                                                                intrinsic.squeeze(0))
-
-    # Predict Tracks
-    # choose your own points to track, with shape (N, 2) for one scene
-    query_points = torch.FloatTensor([[100.0, 200.0], 
-                                        [60.72, 259.94]]).to(device)
-    track_list, vis_score, conf_score = model.track_head(aggregated_tokens_list, images, ps_idx, query_points=query_points[None])
+# get extrinsic
+extrinsic, intrinsic = pose_encoding_to_extri_intri(predictions["pose_enc"], images.shape[-2:])
+predictions["extrinsic"] = extrinsic
+print(f"Extrinsic in main(): {extrinsic}")
+predictions["intrinsic"] = intrinsic
 
 
-def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=10.0, confidence_threshold=0.01):
+'''def convert_vggt_to_sonata(point_map_by_unprojection, images, scale_factor=10.0, confidence_threshold=0.01):
     import numpy as np
     import torch
 
@@ -130,4 +97,4 @@ torch.save(sonata_data, "predictions.pt")
 
 
 print(sonata_data.keys())
-print("Sonata formatted predictions saved to predictions.pt")
+print("Sonata formatted predictions saved to predictions.pt")'''
