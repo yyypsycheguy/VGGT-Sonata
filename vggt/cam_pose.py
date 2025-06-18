@@ -3,7 +3,6 @@ from scipy.spatial.transform import Rotation as R
 import torch
 import torch.linalg
 from tqdm.auto import tqdm
-import viser.transforms as viser_tf
 from vggt.utils.geometry import closed_form_inverse_se3
 
 # coordinates follow untransformed vggt axis, i.e. x right, y down, z forward

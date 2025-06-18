@@ -16,26 +16,20 @@ source .venv/bin/activate
 uv run cam_pose.py
 ```
 
-## To run the model inference separately:
+## To run the two model inference separately:
 Run vggt inference:
-
 ```
 source .venv/bin/activate
 uv run vggt_inference.py
 ```
-
 Run Viser 3D viewer:
 
 ```
 uv run python demo_viser.py --image_folder images
 ```
 
----
-
 For Sonata:
-
 Run Sonata segmentation sample dataset
-
 ```
 cd sonata
 export PYTHONPATH=./
@@ -43,11 +37,9 @@ uv run inference_visualize-sonata.py
 ```
 
 
-# Set up for VGGT & Sonata
+## ## Set up for VGGT & Sonata: VGGT -- Visual Geometry Grounded Transformer
 
 Before running the pipeline, remember to set up dependencies for VGGT and Sonata.
-
-## VGGT: Visual Geometry Grounded Transformer
 
 <a href="https://jytime.github.io/data/VGGT_CVPR25.pdf" target="_blank" rel="noopener noreferrer">
   <img src="https://img.shields.io/badge/Paper-VGGT" alt="Paper PDF">
@@ -543,6 +535,7 @@ our [CODE OF CONDUCT](./.github/CODE_OF_CONDUCT.md) for how to get started.
 ---
 
 ## Sonata
+
 
 This repo provide self-supervised pre-trained [Point Transformer V3](https://github.com/Pointcept/PointTransformerV3) for 3D point cloud downstream tasks.
 
