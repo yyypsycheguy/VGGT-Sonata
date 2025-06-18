@@ -46,7 +46,7 @@ with torch.no_grad():
     [0,  0,  -1, 0],  # z up
     [0,  -1, 0, 0],  # y towards
     [0,  0,  0, 1],
-], dtype=torch.float32, device=extrinsic.device) 
+    ], dtype=torch.float32, device=extrinsic.device) 
     
     transformation = transformation[None, None, :, :]  # [1, 1, 4, 4]
     extrinsic_trans = extrinsic_homo @ transformation

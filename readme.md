@@ -6,13 +6,14 @@ This repository proposes a pipeline that enables 3D scene reconstruction from on
 3D reconstruction -> semantic segmentation -> 2D floor projection & trajectory 
 ```
 cd sonata
+source sonata-venv/bin/activate
 ./bash-command.sh
 ```
 To run camera relocalisation:
 ```
 cd vggt
 source .venv/bin/activate
-uv run cam_pose_prediction.py
+uv run cam_pose.py
 ```
 
 ## To run the model inference separately:
