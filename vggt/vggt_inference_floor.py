@@ -50,7 +50,7 @@ with torch.no_grad():
     
     transformation = transformation[None, None, :, :]  # [1, 1, 4, 4]
     extrinsic_trans = extrinsic_homo @ transformation
-    extrinsic_trans = extrinsic[:,:,:3,:]
+    extrinsic_trans = extrinsic_trans[:,:,:3,:]
 
     # Predict Depth Maps
     depth_map, depth_conf = model.depth_head(aggregated_tokens_list, images, ps_idx)

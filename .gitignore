@@ -161,3 +161,10 @@ images/
 video/
 
 graph.py
+
+# ----------------------- ignore some files from calibration workflow -----------------------
+vggt/lux_cam
+vggt/lux_vggt
+vggt/store_depth_cam
+vggt/store_depth_vggt
+vggt/test.ipynb
