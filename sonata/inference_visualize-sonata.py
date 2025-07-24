@@ -232,7 +232,27 @@ if __name__ == "__main__":
     torch.save(point, "results.pt")
     print("Results saved to results.pt")
     print(point.keys())
-    #print(point)
+
+    # ------------ get coords of selected classes ------------
+    def get_coords_by_class(point, class_name):
+        """
+        Get coordinates of points belonging to a specific class.
+        Args:
+            point (dict): Dictionary containing point cloud data.
+            class_name (str): Name of the class to filter by.
+        Returns:
+            np.ndarray: Coordinates of points belonging to the specified class.
+        """
+        coords = point["coord"].cpu().detach().numpy()
+        mask = np.array([name[i] == class_name for i in range(len(name))])
+        return coords[mask]
+
+    # get coords of chair 
+    chair_coords = get_coords_by_class(point, "chair")
+    print(f"chair coords: {chair_coords}")
+    print(f"Max chair coords: {max(chair_coords[:, 2])}, min chair coords: {min(chair_coords[:, 2])}")
+
+
 
     # ------------ get the floor points ------------
     floor_points = []
@@ -243,6 +263,7 @@ if __name__ == "__main__":
     floor_points = np.array(floor_points)
     print(f"Found {len(floor_points)} floor points")
     print(f"Floor points: {np.unique(floor_points, axis=0)}")
+    print(f"Floor points z axis max {floor_points[:, 2].max()}, min {floor_points[:, 2].min()}")
 
     #show visualisation
     floor_pcd = o3d.geometry.PointCloud()

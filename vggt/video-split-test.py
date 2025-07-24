@@ -18,7 +18,7 @@ def extract_frames_per_second(video_folder, output_folder="images"):
 
         # Video properties
         fps = cap.get(cv2.CAP_PROP_FPS)
-        frame_interval = int(2*fps)  # 1 frame per second
+        frame_interval = int(2 * fps)  # 1 frame per second
         frame_count = 0
         saved_count = 0
 
