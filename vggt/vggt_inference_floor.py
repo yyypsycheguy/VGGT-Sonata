@@ -11,7 +11,18 @@ from vggt.utils.geometry import unproject_depth_map_to_point_map
 from vggt.utils.geometry import depth_to_world_coords_points
 from vggt.utils.geometry import closed_form_inverse_se3
 
+scale_factor = float(input('scale factor (meters):'))
+cam_frame_dis = float(input('Distance from camera to edge of floor (meters):'))
+if scale_factor <= 0 or cam_frame_dis <= 0:
+    raise ValueError("Scale factor and camera frame distance must be positive numbers.")
+if scale_factor < cam_frame_dis:
+    raise ValueError("Scale factor must be greater than camera frame distance.")
+if isinstance(scale_factor or cam_frame_dis, (int, float)) is False:
+    raise TypeError("Scale factor and camera frame distance must be of type float.")
 
+with open("share_var.py", "w") as f:
+    f.write(f"cam_frame_dis = {cam_frame_dis}")
+    
 device = "cuda" if torch.cuda.is_available() else "cpu"
 dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
 
@@ -56,12 +67,6 @@ with torch.no_grad():
 
     # Predict Depth Maps
     depth_map, depth_conf = model.depth_head(aggregated_tokens_list, images, ps_idx)
-
-    '''point_map_by_unprojection = unproject_depth_map_to_point_map( depth_map.squeeze(0),  
-                                            extrinsic.squeeze(0),  
-                                            intrinsic.squeeze(0)) '''
-    
-    print(f'intrinsic: {intrinsic}')
     
     # remove batch dimension
     depth_map = depth_map[0]  # [S, H, W, 1]
@@ -101,7 +106,6 @@ def unproject_depth_map_to_point_map_index(
     t_cam_to_world = t_cam_to_world[:,:,None]
     t_scaled = t_cam_to_world * scale_factor
     extrinsic_scaled = closed_form_inverse_se3(np.concatenate([R_cam_to_world, t_scaled], axis=2))
-    print(f'extrinsic shape: {extrinsics_cam.shape}')
 
     for frame_idx in range(depth_map.shape[0]):
 
@@ -131,7 +135,7 @@ point_map_by_unprojection = unproject_depth_map_to_point_map_index(
     extrinsic,
     intrinsic,
     extrinsic_homo, # [S,4,4]
-    scale_factor= 4.9 #6.1
+    scale_factor= (scale_factor-cam_frame_dis) #3 #3.4 #4.9 #6.1
 )
 
 
@@ -169,7 +173,6 @@ def convert_vggt_to_sonata(point_map_by_unprojection: np.ndarray, images= not No
     coords_all = np.concatenate(coords_cropped, axis=0)
     normals_all = np.concatenate(normals_list, axis=0)
     colors_all = np.concatenate(colors_cropped, axis=0)
-    #print(f"Coords all:{coords_all}, coords_all shape: {coords_all.shape}")
 
     # depth mask
     z_values = coords_all[:, 1]
@@ -192,9 +195,9 @@ def convert_vggt_to_sonata(point_map_by_unprojection: np.ndarray, images= not No
 sonata_data = convert_vggt_to_sonata(point_map_by_unprojection, images=images)
 for key, value in sonata_data.items():
     if isinstance(value, (torch.Tensor, np.ndarray)):
-        print(f"{key}: shape = {value.shape}\n")
+        print(f"{key}: shape = {value.shape}")
 torch.save(sonata_data, "predictions.pt")
 
 print(sonata_data.keys())
-print("Sonata formatted predictions saved to predictions.pt")
+print("Sonata formatted predictions saved to predictions.pt \n")
 

@@ -12,25 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import sys
 
+import concavity
+import matplotlib.pyplot as plt
 import numpy as np
 import open3d as o3d
 import torch
 import torch.nn as nn
+from concavity.utils import *
+from scipy.spatial import Delaunay
+from scipy.stats import zscore
+from shapely.geometry import MultiLineString, MultiPoint, Polygon
+from shapely.ops import polygonize, unary_union
+from sklearn.cluster import DBSCAN
+
 import sonata
 
-from sklearn.cluster import DBSCAN
-import matplotlib.pyplot as plt
-from shapely.geometry import MultiPoint
-from scipy.stats import zscore
+vggt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt"))
+sys.path.append(vggt_path)
 
-import concavity
-from concavity.utils import *
-from scipy.stats import zscore
+from share_var import cam_frame_dis
 
-from shapely.geometry import Polygon, MultiLineString
-from shapely.ops import unary_union, polygonize
-from scipy.spatial import Delaunay
+print(f"Loaded: cam_frame_dis={cam_frame_dis}")
 
 try:
     import flash_attn
@@ -140,7 +145,6 @@ class SegHead(nn.Module):
         return self.seg_head(x)
 
 
-
 if __name__ == "__main__":
     # set random seed
     sonata.utils.set_seed(24525867)
@@ -164,32 +168,31 @@ if __name__ == "__main__":
 
     # Load data transform pipline
     config = [
-    dict(type="CenterShift", apply_z=True),
-    dict(
-        type="GridSample",
-        grid_size=0.02,
-        hash_type="fnv",
-        mode="train",
-        return_grid_coord=True,
-        return_inverse=True,
-    ),
-    dict(type="NormalizeColor"),
-    dict(type="ToTensor"),
-    dict(
-        type="Collect",
-        keys=("coord", "grid_coord", "color", "inverse"),
-        feat_keys=("coord", "color", "normal"),
-    ),
+        dict(type="CenterShift", apply_z=True),
+        dict(
+            type="GridSample",
+            grid_size=0.02,
+            hash_type="fnv",
+            mode="train",
+            return_grid_coord=True,
+            return_inverse=True,
+        ),
+        dict(type="NormalizeColor"),
+        dict(type="ToTensor"),
+        dict(
+            type="Collect",
+            keys=("coord", "grid_coord", "color", "inverse"),
+            feat_keys=("coord", "color", "normal"),
+        ),
     ]
     transform = sonata.transform.Compose(config)
-    #transform = sonata.transform.default()
+    # transform = sonata.transform.default()
 
     # Load data
     point = torch.load("../vggt/predictions.pt")
     print(point.keys())
     point["coord"] = point["coord"].numpy()  # Ensure coordinates are float
     print(f"Loaded point cloud with {len(point['coord'])} points")
-    
 
     # point.pop("segment200")
     # segment = point.pop("segment20")
@@ -247,150 +250,40 @@ if __name__ == "__main__":
         mask = np.array([name[i] == class_name for i in range(len(name))])
         return coords[mask]
 
-    # get coords of chair 
-    chair_coords = get_coords_by_class(point, "chair")
-    print(f"chair coords: {chair_coords}")
-    print(f"Max chair coords: {max(chair_coords[:, 2])}, min chair coords: {min(chair_coords[:, 2])}")
+    # get coords of target class
+    target_class = input("Enter target class (e.g., 'chair', 'window', 'table'): ")
+    target_coords = get_coords_by_class(point, target_class)
 
+    print(
+        f"\nMax chair coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}"
+    )
+    max_index = np.argmax(target_coords[:, 2])
+    max_coord = target_coords[max_index]
+    print(
+        f"Original max chair coord before +{cam_frame_dis}: {max_coord}, index: {max_index}"
+    )
+    print(
+        f"Max cahir z: {max_coord[2] + cam_frame_dis}, y: {max_coord[1]}"
+    )  # y-axis now towards left, z-axis forward
 
+    target_coord_x = float(max_coord[2] + cam_frame_dis)
+    target_coord_y = float(max_coord[1])
 
-    # ------------ get the floor points ------------
-    floor_points = []
-    coords_array = point["coord"].cpu().detach().numpy()
-    for i, coords in enumerate(coords_array):
-        if name[i] == "floor":
-            floor_points.append(coords)
-    floor_points = np.array(floor_points)
-    print(f"Found {len(floor_points)} floor points")
-    print(f"Floor points: {np.unique(floor_points, axis=0)}")
-    print(f"Floor points z axis max {floor_points[:, 2].max()}, min {floor_points[:, 2].min()}")
+    floor_coords = get_coords_by_class(point, "wall")
+    print(
+        f"\n Max wall coords: {max(floor_coords[:, 2])}, min wall coords: {min(floor_coords[:, 2])}"
+    )
+    max_index = np.argmax(floor_coords[:, 2])
+    max_coord = floor_coords[max_index]
+    print(
+        f"Original max wall coord before +{cam_frame_dis} : {max_coord}, index: {max_index}"
+    )
+    print(f"Max wall z: {max_coord[2] + cam_frame_dis}, y: {max_coord[1]}")
 
-    #show visualisation
-    floor_pcd = o3d.geometry.PointCloud()
-    floor_pcd.points = o3d.utility.Vector3dVector(floor_points)
-    floor_pcd.colors = o3d.utility.Vector3dVector(
-        np.array([0.0, 1.0, 0.0]).reshape(1, 3)
-    )  # green color for floor
-    o3d.visualization.draw_geometries([floor_pcd])
-
-
-    # ------------ Compute convex hull (borders) of floor points ------------
-
-    def filter_largest_cluster(points_2d: np.ndarray, eps=0.2, min_samples=30) -> np.ndarray:
-        """
-        Removes all but the largest cluster of 2D points using DBSCAN.
-
-        Args:
-            points_2d (np.ndarray): [N, 2] array of 2D (x, z) points.
-            eps (float): DBSCAN neighborhood radius.
-            min_samples (int): Minimum number of points per cluster.
-
-        Returns:
-            np.ndarray: Filtered points belonging to the largest cluster.
-        """
-        clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(points_2d)
-        labels = clustering.labels_
-
-        # -1 is noise in DBSCAN
-        unique_labels, counts = np.unique(labels[labels != -1], return_counts=True)
-
-        if len(counts) == 0:
-            raise ValueError("No valid clusters found by DBSCAN.")
-
-        largest_cluster_label = unique_labels[np.argmax(counts)]
-        largest_cluster_mask = labels == largest_cluster_label
-        return points_2d[largest_cluster_mask]
-
-    def alpha_shape(points, alpha=0.0001):
-        """
-        Compute the alpha shape (concave hull) of a set of 2D points.
-        Args:
-            points (np.ndarray): Nx2 array of (x, z) coordinates.
-            alpha (float): Alpha value to control the detail. Smaller = tighter shape.
-        Returns:
-            shapely.geometry.Polygon: The resulting concave polygon.
-        """
-
-        if len(points) < 4:
-            return MultiPoint(points).convex_hull
-
-        tri = Delaunay(points)
-        triangles = points[tri.simplices]
-        
-        a_shape_edges = []
-        for tri_coords in triangles:
-            a, b, c = tri_coords
-            len_ab = np.linalg.norm(a - b)
-            len_bc = np.linalg.norm(b - c)
-            len_ca = np.linalg.norm(c - a)
-            s = (len_ab + len_bc + len_ca) / 2.0
-            area = np.sqrt(s * (s - len_ab) * (s - len_bc) * (s - len_ca))
-            circum_r = len_ab * len_bc * len_ca / (4.0 * area + 1e-8)
-
-            if circum_r < 1.0 / alpha:
-                a_shape_edges += [(tuple(a), tuple(b)), (tuple(b), tuple(c)), (tuple(c), tuple(a))]
-
-        m = MultiLineString(a_shape_edges)
-        polygons = list(polygonize(unary_union(m)))
-        return unary_union(polygons)
-
-    def extract_floor_trajectory(floor_points_3d: np.ndarray, zscore_threshold=1.5, show_plot=True, save_path="floor_trajectory.png"):
-        """
-        Extracts the border trajectory of the floor from 3D points with outlier removal.
-
-        Args:
-            floor_points_3d (np.ndarray): Nx3 array of 3D (x, y, z) (right, forward, up) floor points.
-            zscore_threshold (float): Z-score threshold for filtering outliers.
-            show_plot (bool): Whether to plot the result.
-            save_path (str or None): If set, saves the figure to this path.
-
-        Returns:
-            trajectory_2d (np.ndarray): Mx2 array of 2D (x, z) border points.
-        """
-        # Project to 2D (X-Y plane)
-        floor_points_2d = floor_points_3d[:, :2]  # shape: [N, 2] [X,Y]
-
-        # Remove outliers using z-score
-        zs = zscore(floor_points_2d, axis=0)
-        mask = np.all(np.abs(zs) < zscore_threshold, axis=1)
-        filtered_points = floor_points_2d[mask]
-
-        filtered_points = filter_largest_cluster(filtered_points, eps=0.1, min_samples=10)
-        print(f"Filtered points shape: {filtered_points.shape}")
-
-        if len(filtered_points) < 3:
-            raise ValueError("Not enough inlier points after filtering for convex hull.")
-        
-        trajectory_2d = concavity.concave_hull(filtered_points, 50)
-        trajectory_2d = trajectory_2d.buffer(-0.27)
-        if trajectory_2d.geom_type == 'Polygon':
-            trajectory_2d = np.array(trajectory_2d.exterior.coords)
-        elif trajectory_2d.geom_type == 'MultiPolygon':
-            raise ValueError("Concave hull resulted in multiple polygons, please scan somewhere with less noise on the ground.")
-            #trajectory_2d = np.concatenate([np.array(poly.exterior.coords) for poly in trajectory_2d.geoms])
-        
-
-        if show_plot:
-            plt.figure(figsize=(8, 6))
-            plt.plot(floor_points_2d[:, 0], floor_points_2d[:, 1], 'go', alpha=0.2, label='Raw Points')
-            plt.plot(filtered_points[:, 0], filtered_points[:, 1], 'bo', alpha=0.4, label='Filtered Points')
-            plt.plot(np.append(trajectory_2d[:, 0], trajectory_2d[0, 0]),
-                    np.append(trajectory_2d[:, 1], trajectory_2d[0, 1]),
-                    'r-', lw=2, label='Trajectory')
-            plt.fill(trajectory_2d[:, 0], trajectory_2d[:, 1], 'r', alpha=0.1)
-            plt.title("Floor Border Trajectory (After Outlier Removal)")
-            plt.xlabel("Y (forward)")
-            plt.ylabel("X(right)")
-            #plt.axis('equal')
-            plt.grid(True)
-            plt.legend()
-            if save_path:
-                plt.savefig(save_path)
-                print(f"Plot saved to {save_path}")
-            plt.close()
-
-        return trajectory_2d
-
-
-    trajectory = extract_floor_trajectory(floor_points)
-    print("Trajectory points (X-Y)")
+    # -------- for demo purpose, write coords to bash script --------
+    from reachy2_sdk import ReachySDK
+    reachy = ReachySDK(host="172.18.131.66")
+    reachy.mobile_base.turn_on()
+    reachy.mobile_base.reset_odometry()
+    reachy.mobile_base.goto(x=target_coord_x, y=target_coord_y, theta=0)
+    print('Move complete.')
