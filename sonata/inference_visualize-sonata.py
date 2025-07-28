@@ -30,12 +30,12 @@ from sklearn.cluster import DBSCAN
 
 import sonata
 
-vggt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt"))
+'''vggt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt"))
 sys.path.append(vggt_path)
 
 from share_var import cam_frame_dis
 
-print(f"Loaded: cam_frame_dis={cam_frame_dis}")
+print(f"Loaded: cam_frame_dis={cam_frame_dis}")'''
 
 try:
     import flash_attn
@@ -189,7 +189,8 @@ if __name__ == "__main__":
     # transform = sonata.transform.default()
 
     # Load data
-    point = torch.load("../vggt/predictions.pt")
+    #point = torch.load("../vggt/predictions.pt")
+    point = torch.load("../vggt/predictions_raw_test.pt")
     print(point.keys())
     point["coord"] = point["coord"].numpy()  # Ensure coordinates are float
     print(f"Loaded point cloud with {len(point['coord'])} points")
@@ -251,23 +252,29 @@ if __name__ == "__main__":
         return coords[mask]
 
     # get coords of target class
-    target_class = input("Enter target class (e.g., 'chair', 'window', 'table'): ")
+    '''target_class = input("Enter target class (e.g., 'chair', 'window', 'table'): ")
     target_coords = get_coords_by_class(point, target_class)
 
+    min_index = np.argmax(target_coords[:, 2])
+    min_coord = target_coords[min_index]
     print(
-        f"\nMax chair coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}"
-    )
-    max_index = np.argmax(target_coords[:, 2])
-    max_coord = target_coords[max_index]
-    print(
-        f"Original max chair coord before +{cam_frame_dis}: {max_coord}, index: {max_index}"
-    )
-    print(
-        f"Max cahir z: {max_coord[2] + cam_frame_dis}, y: {max_coord[1]}"
-    )  # y-axis now towards left, z-axis forward
+        f"Original min other furniture coord: {min_coord}, index: {min_index}"
+    )'''
 
-    target_coord_x = float(max_coord[2] + cam_frame_dis)
-    target_coord_y = float(max_coord[1])
+    ''' print(
+            f"\nMax chair coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}"
+        )
+        max_index = np.argmax(target_coords[:, 2])
+        max_coord = target_coords[max_index]
+        print(
+            f"Original max chair coord before +{cam_frame_dis}: {max_coord}, index: {max_index}"
+        )
+        print(
+            f"Max cahir z: {max_coord[2] + cam_frame_dis}, y: {max_coord[1]}"
+        )  # y-axis now towards left, z-axis forward
+
+        target_coord_x = float(max_coord[2] + cam_frame_dis)
+        target_coord_y = float(max_coord[1])'''
 
     floor_coords = get_coords_by_class(point, "wall")
     print(
@@ -276,14 +283,22 @@ if __name__ == "__main__":
     max_index = np.argmax(floor_coords[:, 2])
     max_coord = floor_coords[max_index]
     print(
-        f"Original max wall coord before +{cam_frame_dis} : {max_coord}, index: {max_index}"
+        f"Original max wall coord: {max_coord}, index: {max_index}"
     )
-    print(f"Max wall z: {max_coord[2] + cam_frame_dis}, y: {max_coord[1]}")
+    #print(f"Max wall z: {max_coord[2] + cam_frame_dis}, y: {max_coord[1]}")
 
-    # -------- for demo purpose, write coords to bash script --------
-    from reachy2_sdk import ReachySDK
+    # get overall min coord
+    point = point["coord"].cpu().detach().numpy()
+    min_overall_index = np.argmin(point[:,2])
+    min_coord = point[min_overall_index]
+    print(
+        f"Original overall min coord: {min_coord}, index: {min_overall_index}"
+    )
+
+    # -------- for demo purpose, write coords to run reachy --------
+    '''from reachy2_sdk import ReachySDK
     reachy = ReachySDK(host="172.18.131.66")
     reachy.mobile_base.turn_on()
     reachy.mobile_base.reset_odometry()
     reachy.mobile_base.goto(x=target_coord_x, y=target_coord_y, theta=0)
-    print('Move complete.')
+    print('Move complete.')'''

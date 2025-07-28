@@ -11,17 +11,17 @@ from vggt.utils.geometry import unproject_depth_map_to_point_map
 from vggt.utils.geometry import depth_to_world_coords_points
 from vggt.utils.geometry import closed_form_inverse_se3
 
-scale_factor = float(input('scale factor (meters):'))
+'''scale_factor = float(input('scale factor (meters):'))
 cam_frame_dis = float(input('Distance from camera to edge of floor (meters):'))
 if scale_factor <= 0 or cam_frame_dis <= 0:
     raise ValueError("Scale factor and camera frame distance must be positive numbers.")
 if scale_factor < cam_frame_dis:
     raise ValueError("Scale factor must be greater than camera frame distance.")
 if isinstance(scale_factor or cam_frame_dis, (int, float)) is False:
-    raise TypeError("Scale factor and camera frame distance must be of type float.")
+    raise TypeError("Scale factor and camera frame distance must be of type float.")'''
 
-with open("share_var.py", "w") as f:
-    f.write(f"cam_frame_dis = {cam_frame_dis}")
+'''with open("share_var.py", "w") as f:
+    f.write(f"cam_frame_dis = {cam_frame_dis}")'''
     
 device = "cuda" if torch.cuda.is_available() else "cpu"
 dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
@@ -73,6 +73,15 @@ with torch.no_grad():
     extrinsic = extrinsic[0]  # [S, 3, 4]
     intrinsic = intrinsic[0]  # [S, 3, 3]
     extrinsic_homo = extrinsic_homo[0]  # [S, 4, 4]
+
+    vggt_raw_output = unproject_depth_map_to_point_map(
+        depth_map,
+        extrinsic,
+        intrinsic
+    )
+
+    '''torch.save(vggt_raw_output, "vggt_raw.pt")
+    print(f"aved to vggt_raw.pt")'''
 
 
 
@@ -130,13 +139,13 @@ def unproject_depth_map_to_point_map_index(
     return world_points_array
 
 
-point_map_by_unprojection = unproject_depth_map_to_point_map_index(
+'''point_map_by_unprojection = unproject_depth_map_to_point_map_index(
     depth_map,
     extrinsic,
     intrinsic,
     extrinsic_homo, # [S,4,4]
     scale_factor= (scale_factor-cam_frame_dis) #3 #3.4 #4.9 #6.1
-)
+)'''
 
 
 # -------------------------- Convert VGGT point map to SONATA format -----------------------------
@@ -192,12 +201,13 @@ def convert_vggt_to_sonata(point_map_by_unprojection: np.ndarray, images= not No
 
 
 
-sonata_data = convert_vggt_to_sonata(point_map_by_unprojection, images=images)
+sonata_data = convert_vggt_to_sonata(vggt_raw_output, images=images)
 for key, value in sonata_data.items():
     if isinstance(value, (torch.Tensor, np.ndarray)):
         print(f"{key}: shape = {value.shape}")
-torch.save(sonata_data, "predictions.pt")
+#torch.save(sonata_data, "predictions.pt")
+torch.save(sonata_data, "predictions_raw_test.pt")
 
 print(sonata_data.keys())
-print("Sonata formatted predictions saved to predictions.pt \n")
+print("Sonata formatted predictions saved to predictions_raw_test.pt \n")
 

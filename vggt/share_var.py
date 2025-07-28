@@ -1,1 +1,0 @@
-cam_frame_dis = 3.1
