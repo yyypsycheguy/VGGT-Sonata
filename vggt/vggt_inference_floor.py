@@ -11,6 +11,7 @@ from vggt.utils.geometry import unproject_depth_map_to_point_map
 from vggt.utils.geometry import depth_to_world_coords_points
 from vggt.utils.geometry import closed_form_inverse_se3
 
+# only uncomment when using reachy
 '''scale_factor = float(input('scale factor (meters):'))
 cam_frame_dis = float(input('Distance from camera to edge of floor (meters):'))
 if scale_factor <= 0 or cam_frame_dis <= 0:
@@ -22,6 +23,7 @@ if isinstance(scale_factor or cam_frame_dis, (int, float)) is False:
 
 '''with open("share_var.py", "w") as f:
     f.write(f"cam_frame_dis = {cam_frame_dis}")'''
+
     
 device = "cuda" if torch.cuda.is_available() else "cpu"
 dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
@@ -80,10 +82,6 @@ with torch.no_grad():
         intrinsic
     )
 
-    '''torch.save(vggt_raw_output, "vggt_raw.pt")
-    print(f"aved to vggt_raw.pt")'''
-
-
 
 def unproject_depth_map_to_point_map_index(
     depth_map: np.ndarray,         # shape: [S, H, W, 1]
@@ -139,14 +137,22 @@ def unproject_depth_map_to_point_map_index(
     return world_points_array
 
 
-'''point_map_by_unprojection = unproject_depth_map_to_point_map_index(
+path = os.path.abspath(os.path.join(os.path.dirname(__file__), "share_var.py"))
+with open(path, 'r') as f:
+    for line in f.readlines():
+        if 'scale_factor' in line:
+            sf = float(line.split('=')[1].strip())
+
+
+point_map_by_unprojection = unproject_depth_map_to_point_map_index(
     depth_map,
     extrinsic,
     intrinsic,
     extrinsic_homo, # [S,4,4]
-    scale_factor= (scale_factor-cam_frame_dis) #3 #3.4 #4.9 #6.1
-)'''
+    scale_factor= sf
+)
 
+open(path, "w").close() # clears sf content
 
 # -------------------------- Convert VGGT point map to SONATA format -----------------------------
 def convert_vggt_to_sonata(point_map_by_unprojection: np.ndarray, images= not None, conf_threshold= math.inf):
@@ -200,14 +206,18 @@ def convert_vggt_to_sonata(point_map_by_unprojection: np.ndarray, images= not No
     return sonata_dict
 
 
+if sf == 1.0:
+    sonata_data = convert_vggt_to_sonata(vggt_raw_output, images=images)
+else:
+    print(f"Using scale factor: {sf}")
+    sonata_data = convert_vggt_to_sonata(point_map_by_unprojection, images=images)
 
-sonata_data = convert_vggt_to_sonata(vggt_raw_output, images=images)
 for key, value in sonata_data.items():
     if isinstance(value, (torch.Tensor, np.ndarray)):
         print(f"{key}: shape = {value.shape}")
 #torch.save(sonata_data, "predictions.pt")
-torch.save(sonata_data, "predictions_raw_test.pt")
+torch.save(sonata_data, "predictions.pt")
 
 print(sonata_data.keys())
-print("Sonata formatted predictions saved to predictions_raw_test.pt \n")
+print("Sonata formatted predictions saved to predictions.pt \n")
 

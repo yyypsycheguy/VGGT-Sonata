@@ -30,6 +30,7 @@ from sklearn.cluster import DBSCAN
 
 import sonata
 
+# on;y uncomment when using reachy
 '''vggt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt"))
 sys.path.append(vggt_path)
 
@@ -190,14 +191,11 @@ if __name__ == "__main__":
 
     # Load data
     #point = torch.load("../vggt/predictions.pt")
-    point = torch.load("../vggt/predictions_raw_test.pt")
+    point = torch.load("../vggt/predictions.pt")
     print(point.keys())
-    point["coord"] = point["coord"].numpy()  # Ensure coordinates are float
+    point["coord"] = point["coord"].numpy()
     print(f"Loaded point cloud with {len(point['coord'])} points")
 
-    # point.pop("segment200")
-    # segment = point.pop("segment20")
-    # point["segment"] = torch.zeros_like()  # two kinds of segment exist in ScanNet, only use one
     original_coord = point["coord"].copy()
     point = transform(point)
 
@@ -237,6 +235,7 @@ if __name__ == "__main__":
     print("Results saved to results.pt")
     print(point.keys())
 
+
     # ------------ get coords of selected classes ------------
     def get_coords_by_class(point, class_name):
         """
@@ -251,54 +250,45 @@ if __name__ == "__main__":
         mask = np.array([name[i] == class_name for i in range(len(name))])
         return coords[mask]
 
+
     # get coords of target class
-    '''target_class = input("Enter target class (e.g., 'chair', 'window', 'table'): ")
-    target_coords = get_coords_by_class(point, target_class)
-
-    min_index = np.argmax(target_coords[:, 2])
-    min_coord = target_coords[min_index]
+    floor_coords = get_coords_by_class(point, "chair")
     print(
-        f"Original min other furniture coord: {min_coord}, index: {min_index}"
-    )'''
-
-    ''' print(
-            f"\nMax chair coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}"
-        )
-        max_index = np.argmax(target_coords[:, 2])
-        max_coord = target_coords[max_index]
-        print(
-            f"Original max chair coord before +{cam_frame_dis}: {max_coord}, index: {max_index}"
-        )
-        print(
-            f"Max cahir z: {max_coord[2] + cam_frame_dis}, y: {max_coord[1]}"
-        )  # y-axis now towards left, z-axis forward
-
-        target_coord_x = float(max_coord[2] + cam_frame_dis)
-        target_coord_y = float(max_coord[1])'''
-
-    floor_coords = get_coords_by_class(point, "wall")
-    print(
-        f"\n Max wall coords: {max(floor_coords[:, 2])}, min wall coords: {min(floor_coords[:, 2])}"
+        f"\n Max chair coords: {max(floor_coords[:, 2])}, min chair coords: {min(floor_coords[:, 2])}"
     )
     max_index = np.argmax(floor_coords[:, 2])
     max_coord = floor_coords[max_index]
     print(
-        f"Original max wall coord: {max_coord}, index: {max_index}"
+        f"Original max chair coord: {max_coord}, index: {max_index}"
+    )
+    print(
+        f"Calibrated max chair depth: {max_coord[2] + 3.1}, index: {max_index}"
     )
     #print(f"Max wall z: {max_coord[2] + cam_frame_dis}, y: {max_coord[1]}")
-
-    # get overall min coord
-    point = point["coord"].cpu().detach().numpy()
-    min_overall_index = np.argmin(point[:,2])
-    min_coord = point[min_overall_index]
+    
+    # get overall min coord floor
+    floor_coords = get_coords_by_class(point, "floor")
     print(
-        f"Original overall min coord: {min_coord}, index: {min_overall_index}"
+        f"\n Max floor coords: {max(floor_coords[:, 2])}, min floor coords: {min(floor_coords[:, 2])}"
+    )
+    min_index = np.argmin(floor_coords[:, 2])
+    min_coord = floor_coords[min_index]
+    print(
+        f"Original min floor coord: {min_coord}, index: {min_index}"
+    )
+    print(
+        f"Calibrated min floor depth: {min_coord[2] + 3.1}, index: {min_index}"
     )
 
-    # -------- for demo purpose, write coords to run reachy --------
-    '''from reachy2_sdk import ReachySDK
-    reachy = ReachySDK(host="172.18.131.66")
-    reachy.mobile_base.turn_on()
-    reachy.mobile_base.reset_odometry()
-    reachy.mobile_base.goto(x=target_coord_x, y=target_coord_y, theta=0)
-    print('Move complete.')'''
+    def scale_coord(frame_dis: float, min_depth= min_coord[2]) -> float:
+        sf = frame_dis / min_depth/ 1000
+        return sf
+    
+    frame_dis = 3.1
+    scale_factor = scale_coord(frame_dis=frame_dis)
+    print(f'Scaled by frame dis {frame_dis} m, Scale factor: {scale_factor}\n')
+
+    # Save updated scale factor to share_var.py
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt/share_var.py"))
+    with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt/share_var.py")), 'w') as f:
+        f.write(f'scale_factor = {scale_factor}\n')
