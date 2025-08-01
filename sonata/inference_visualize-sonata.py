@@ -276,17 +276,32 @@ if __name__ == "__main__":
     print(
         f"Original min floor coord: {min_coord}, index: {min_index}"
     )
+    frame_dis = 3.1
     print(
-        f"Calibrated min floor depth: {min_coord[2] + 3.1}, index: {min_index}"
+        f"Calibrated min floor depth: {min_coord[2] + frame_dis}, index: {min_index}"
     )
 
     def scale_coord(frame_dis: float, min_depth= min_coord[2]) -> float:
         sf = frame_dis / min_depth/ 1000
         return sf
     
-    frame_dis = 3.1
-    scale_factor = scale_coord(frame_dis=frame_dis)
-    print(f'Scaled by frame dis {frame_dis} m, Scale factor: {scale_factor}\n')
+    path = os.path.join(os.path.dirname(__file__), "../vggt/share_var.py")
+    # show t extrinsic scaled by sf
+    os.path.abspath(path)
+    with open(os.path.abspath(path), 'r') as f:
+            content = f.read().strip()
+
+    # Split by '=' and take the value part
+    scale_factor = float(content.split('=')[1].strip())
+    print("Old Scale factor:", scale_factor)
+
+    t_extrinsic_scaled = torch.load("../vggt/t_extrinsic_scaled.pt")
+    t_extrinsic_scaled = t_extrinsic_scaled * scale_factor
+    print(f"t_extrinsic_scaled after scaling: {t_extrinsic_scaled}")
+        
+    '''scale_factor = scale_coord(frame_dis=frame_dis)
+    print(f'Scaled by frame dis {frame_dis} m, Scale factor: {scale_factor}\n')'''
+
 
     # Save updated scale factor to share_var.py
     os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt/share_var.py"))

@@ -37,29 +37,35 @@ image_names = []
 for img in os.listdir("images"):
     if img.endswith((".jpg", ".jpeg", ".png")):
         image_names.append(os.path.join("images", img))
-
+image_names = sorted(image_names) 
+print(f"image names: {image_names}")
 images = load_and_preprocess_images(image_names).to(device)
 
 
 with torch.no_grad():
     with torch.cuda.amp.autocast(dtype=dtype):
-        images = images[None]  # add batch dimension
+        images = images[None]  #[B, S, C, H, W]
         aggregated_tokens_list, ps_idx = model.aggregator(images)
+        print(f'ps_idx: {ps_idx}')  # [B, S, P]
                 
     # Predict Cameras
     pose_enc = model.camera_head(aggregated_tokens_list)[-1]
  
     # Extrinsic and intrinsic matrices, following OpenCV convention (camera from world)
     extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:]) # (B, S, 3, 4) and (B, S, 3, 3)
+    print(f'Extrinsic shape: {extrinsic.shape}')  # [B, S, 3, 4]
+    t_extrinsic = extrinsic[:, :, :3, 3]  # [B, S, 3]
+    print(f'Etrinsic translation unscaled: {t_extrinsic}')
+    print(f'Extrinsic translation shape: {t_extrinsic.shape}')
 
     B, V = extrinsic.shape[:2]  # [1, 6, 3, 4]
     extrinsic_homo = torch.eye(4, device=device).repeat(B, V, 1, 1)  # [1, 6, 4, 4]
     extrinsic_homo[:, :, :3, :] = extrinsic
     transformation = torch.eye(4, device=device)         
     transformation = torch.tensor([
-    [1,  0,  0, 0],  # x right
-    [0,  0,  -1, 0],  # z up
-    [0,  -1, 0, 0],  # y towards
+    [1,  0,  0, 0],  # x right -> x right
+    [0,  0,  -1, 0],  # y down -> z up
+    [0,  -1, 0, 0],  # z forward -> y towards (forward translation)
     [0,  0,  0, 1],
     ], dtype=torch.float32, device=extrinsic.device) 
     
@@ -74,13 +80,22 @@ with torch.no_grad():
     depth_map = depth_map[0]  # [S, H, W, 1]
     extrinsic = extrinsic[0]  # [S, 3, 4]
     intrinsic = intrinsic[0]  # [S, 3, 3]
-    extrinsic_homo = extrinsic_homo[0]  # [S, 4, 4]
+    extrinsic_homo = extrinsic_homo[0]  # extrinsic but shape [S,4,4]
 
     vggt_raw_output = unproject_depth_map_to_point_map(
         depth_map,
         extrinsic,
         intrinsic
     )
+
+    # keypoint tracking
+    '''_, _, _, H, W = images.shape
+    x_center = H/2
+    y_center = W/2
+    query_points = torch.tensor([[x_center, y_center]]).to(device)
+    print(f'query point shape: {query_points.shape}')
+    track_list, vis_score, conf_score = model.track_head(aggregated_tokens_list, images, ps_idx, query_points[None])
+    print(f'Points tracked in each images: {track_list}')'''
 
 
 def unproject_depth_map_to_point_map_index(
@@ -105,13 +120,13 @@ def unproject_depth_map_to_point_map_index(
     world_points_list = []
     ref_inv = np.linalg.inv(extrinsics_homo[0])
 
-    # Scale translation matrix in extrinsic
+    # convert extrinsic to cam to world
     cam_to_world_extrinsic = closed_form_inverse_se3(extrinsics_cam)
 
     R_cam_to_world = cam_to_world_extrinsic[:, :3, :3]
     t_cam_to_world = cam_to_world_extrinsic[:, :3, 3] 
     t_cam_to_world = t_cam_to_world[:,:,None]
-    t_scaled = t_cam_to_world * scale_factor
+    t_scaled = t_cam_to_world * scale_factor # Scale translation matrix in extrinsic
     extrinsic_scaled = closed_form_inverse_se3(np.concatenate([R_cam_to_world, t_scaled], axis=2))
 
     for frame_idx in range(depth_map.shape[0]):
@@ -134,7 +149,7 @@ def unproject_depth_map_to_point_map_index(
         world_points_list.append(world_points)
 
     world_points_array = np.stack(world_points_list, axis=0)  # [S, H, W, 3]
-    return world_points_array
+    return world_points_array, t_scaled
 
 
 path = os.path.abspath(os.path.join(os.path.dirname(__file__), "share_var.py"))
@@ -142,9 +157,10 @@ with open(path, 'r') as f:
     for line in f.readlines():
         if 'scale_factor' in line:
             sf = float(line.split('=')[1].strip())
+print(f'Previous scale factor" {sf}')
 
 
-point_map_by_unprojection = unproject_depth_map_to_point_map_index(
+point_map_by_unprojection, t_extrinsic_scaled = unproject_depth_map_to_point_map_index(
     depth_map,
     extrinsic,
     intrinsic,
@@ -152,7 +168,14 @@ point_map_by_unprojection = unproject_depth_map_to_point_map_index(
     scale_factor= sf
 )
 
-open(path, "w").close() # clears sf content
+
+# sort the order of 
+
+torch.save(t_extrinsic_scaled, 't_extrinsic_scaled.pt')
+print(f't cam-to-world scaled of extrinsic: {t_extrinsic_scaled}')
+print(f'Translation part of extrinsic saved to: t_extrinsic_scaled.pt')
+
+#open(path, "w").close() # clears sf content
 
 # -------------------------- Convert VGGT point map to SONATA format -----------------------------
 def convert_vggt_to_sonata(point_map_by_unprojection: np.ndarray, images= not None, conf_threshold= math.inf):

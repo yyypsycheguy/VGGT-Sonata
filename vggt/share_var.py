@@ -1,1 +1,1 @@
-scale_factor = 2.8600148254055537
+scale_factor = 1.0
