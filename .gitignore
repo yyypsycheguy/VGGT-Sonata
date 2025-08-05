@@ -168,6 +168,8 @@ vggt/lux_vggt
 vggt/store_depth_cam
 vggt/store_depth_vggt
 vggt/test.ipynb
+vggt/auatomated_script.py
+vggt/avif_test.ipynb
 
 vggt/plot-test-before.py
 vggt/plot-test-after.py
