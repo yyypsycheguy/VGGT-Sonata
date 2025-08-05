@@ -54,9 +54,6 @@ with torch.no_grad():
     # Extrinsic and intrinsic matrices, following OpenCV convention (camera from world)
     extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:]) # (B, S, 3, 4) and (B, S, 3, 3)
     print(f'Extrinsic shape: {extrinsic.shape}')  # [B, S, 3, 4]
-    t_extrinsic = extrinsic[:, :, :3, 3]  # [B, S, 3]
-    print(f'Etrinsic translation unscaled: {t_extrinsic}')
-    print(f'Extrinsic translation shape: {t_extrinsic.shape}')
 
     B, V = extrinsic.shape[:2]  # [1, 6, 3, 4]
     extrinsic_homo = torch.eye(4, device=device).repeat(B, V, 1, 1)  # [1, 6, 4, 4]
@@ -81,6 +78,8 @@ with torch.no_grad():
     extrinsic = extrinsic[0]  # [S, 3, 4]
     intrinsic = intrinsic[0]  # [S, 3, 3]
     extrinsic_homo = extrinsic_homo[0]  # extrinsic but shape [S,4,4]
+    t_extrinsic = extrinsic[:, :3, 3]  # [B, S, 3]
+    #print(f'Etrinsic translation unscaled: {t_extrinsic}')
 
     vggt_raw_output = unproject_depth_map_to_point_map(
         depth_map,
@@ -126,7 +125,8 @@ def unproject_depth_map_to_point_map_index(
     R_cam_to_world = cam_to_world_extrinsic[:, :3, :3]
     t_cam_to_world = cam_to_world_extrinsic[:, :3, 3] 
     t_cam_to_world = t_cam_to_world[:,:,None]
-    t_scaled = t_cam_to_world * scale_factor # Scale translation matrix in extrinsic
+    t_scaled = t_cam_to_world.clone()
+    t_scaled[:, 1, 0] *= scale_factor  # scale forward/back translation only
     extrinsic_scaled = closed_form_inverse_se3(np.concatenate([R_cam_to_world, t_scaled], axis=2))
 
     for frame_idx in range(depth_map.shape[0]):
@@ -168,8 +168,6 @@ point_map_by_unprojection, t_extrinsic_scaled = unproject_depth_map_to_point_map
     scale_factor= sf
 )
 
-
-# sort the order of 
 
 torch.save(t_extrinsic_scaled, 't_extrinsic_scaled.pt')
 print(f't cam-to-world scaled of extrinsic: {t_extrinsic_scaled}')

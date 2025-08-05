@@ -252,55 +252,40 @@ if __name__ == "__main__":
 
 
     # get coords of target class
+    frame_dis = 3.1
     floor_coords = get_coords_by_class(point, "chair")
-    print(
-        f"\n Max chair coords: {max(floor_coords[:, 2])}, min chair coords: {min(floor_coords[:, 2])}"
-    )
+    print(f"\n Max chair coords: {max(floor_coords[:, 2])}, min chair coords: {min(floor_coords[:, 2])}")
     max_index = np.argmax(floor_coords[:, 2])
     max_coord = floor_coords[max_index]
-    print(
-        f"Original max chair coord: {max_coord}, index: {max_index}"
-    )
-    print(
-        f"Calibrated max chair depth: {max_coord[2] + 3.1}, index: {max_index}"
-    )
-    #print(f"Max wall z: {max_coord[2] + cam_frame_dis}, y: {max_coord[1]}")
+    print(f"Original max chair coord: {max_coord}, index: {max_index}")
+    print(f"Calibrated max chair depth: {max_coord[2] + frame_dis}, index: {max_index}")
     
+
     # get overall min coord floor
     floor_coords = get_coords_by_class(point, "floor")
-    print(
-        f"\n Max floor coords: {max(floor_coords[:, 2])}, min floor coords: {min(floor_coords[:, 2])}"
-    )
+    print(f"\n Max floor coords: {max(floor_coords[:, 2])}, min floor coords: {min(floor_coords[:, 2])}")
     min_index = np.argmin(floor_coords[:, 2])
     min_coord = floor_coords[min_index]
-    print(
-        f"Original min floor coord: {min_coord}, index: {min_index}"
-    )
-    frame_dis = 3.1
-    print(
-        f"Calibrated min floor depth: {min_coord[2] + frame_dis}, index: {min_index}"
-    )
+    print(f"Original min floor coord: {min_coord}, index: {min_index}")
+    print(f"Calibrated min floor depth: {min_coord[2] + frame_dis}, index: {min_index}")
+
 
     def scale_coord(frame_dis: float, min_depth= min_coord[2]) -> float:
         sf = frame_dis / min_depth/ 1000
         return sf
     
+
     path = os.path.join(os.path.dirname(__file__), "../vggt/share_var.py")
-    # show t extrinsic scaled by sf
     os.path.abspath(path)
     with open(os.path.abspath(path), 'r') as f:
             content = f.read().strip()
 
-    # Split by '=' and take the value part
     scale_factor = float(content.split('=')[1].strip())
     print("Old Scale factor:", scale_factor)
+    
 
-    t_extrinsic_scaled = torch.load("../vggt/t_extrinsic_scaled.pt")
-    t_extrinsic_scaled = t_extrinsic_scaled * scale_factor
-    print(f"t_extrinsic_scaled after scaling: {t_extrinsic_scaled}")
-        
-    '''scale_factor = scale_coord(frame_dis=frame_dis)
-    print(f'Scaled by frame dis {frame_dis} m, Scale factor: {scale_factor}\n')'''
+    scale_factor = scale_coord(frame_dis=frame_dis)
+    print(f'Scaled by frame dis {frame_dis} m, Scale factor: {scale_factor}\n')
 
 
     # Save updated scale factor to share_var.py
