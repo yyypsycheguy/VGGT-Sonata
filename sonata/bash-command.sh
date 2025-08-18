@@ -36,3 +36,9 @@ if [ $counter -eq 2 ]; then
     echo "scale_factor reset to 1.0 "
     exit 0
 fi
+
+# operate lekiwi
+cd ../lerobot/examples/lekiwi
+conda activate lerobot
+MAX_JOB=4 uv run teleoperate.py
+conda deactivate

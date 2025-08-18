@@ -13,30 +13,12 @@
 # limitations under the License.
 
 import os
-import sys
-
-import concavity
-import matplotlib.pyplot as plt
 import numpy as np
 import open3d as o3d
 import torch
 import torch.nn as nn
-from concavity.utils import *
-from scipy.spatial import Delaunay
-from scipy.stats import zscore
-from shapely.geometry import MultiLineString, MultiPoint, Polygon
-from shapely.ops import polygonize, unary_union
-from sklearn.cluster import DBSCAN
 
 import sonata
-
-# on;y uncomment when using reachy
-'''vggt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt"))
-sys.path.append(vggt_path)
-
-from share_var import cam_frame_dis
-
-print(f"Loaded: cam_frame_dis={cam_frame_dis}")'''
 
 try:
     import flash_attn
@@ -253,12 +235,15 @@ if __name__ == "__main__":
 
     # get coords of target class
     frame_dis = 1.45 # measured frame distance of le kiwi; 3.1m for apply iPhone video recording, dis of blind angle from camera to bottom of video frame
-    floor_coords = get_coords_by_class(point, "chair")
-    print(f"\n Max chair coords: {max(floor_coords[:, 2])}, min chair coords: {min(floor_coords[:, 2])}")
+    target = "chair"
+    floor_coords = get_coords_by_class(point, target) # modify to get coords of target class
+    print(f"\n Max {target} coords: {max(floor_coords[:, 2])}, min chair coords: {min(floor_coords[:, 2])}")
     max_index = np.argmax(floor_coords[:, 2])
     max_coord = floor_coords[max_index]
-    print(f"Original max chair coord: {max_coord}, index: {max_index}")
-    print(f"Calibrated max chair depth: {max_coord[2] + frame_dis}, index: {max_index}")
+    print(f"Original max {target} coord: {max_coord}")
+    target_calibrated_dis = max_coord[2] + frame_dis
+    print(f"Calibrated max {target} depth: {target_calibrated_dis}")
+    target_right_dis = max_coord[1]
     
 
     # get overall min coord floor
@@ -266,8 +251,8 @@ if __name__ == "__main__":
     print(f"\n Max floor coords: {max(floor_coords[:, 2])}, min floor coords: {min(floor_coords[:, 2])}")
     min_index = np.argmin(floor_coords[:, 2])
     min_coord = floor_coords[min_index]
-    print(f"Original min floor coord: {min_coord}, index: {min_index}")
-    print(f"Calibrated min floor depth: {min_coord[2] + frame_dis}, index: {min_index}")
+    print(f"Original min floor coord: {min_coord}")
+    print(f"Calibrated min floor depth: {min_coord[2] + frame_dis}")
 
 
     def scale_coord(frame_dis: float, min_depth= min_coord[2]) -> float:
@@ -289,6 +274,10 @@ if __name__ == "__main__":
 
 
     # Save updated scale factor to share_var.py
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt/share_var.py"))
     with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt/share_var.py")), 'w') as f:
         f.write(f'scale_factor = {scale_factor}\n')
+
+    # Write distance ouput to dis_output.py
+    with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "dis_output.py")), 'w') as f:
+        f.write(f'dis_y = {target_calibrated_dis}\n') # y forward sonata
+        f.write(f'dis_x = {target_right_dis}\n') # x right sonata

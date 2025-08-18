@@ -28,22 +28,18 @@ keyboard.connect()
 
 _init_rerun(session_name="lekiwi_teleop")
 
-folder = 'wrist_images'
-os.makedirs(folder, exist_ok=True)
-
-action_path = os.path.join(folder, "actions.txt")
-
 freeze_pose = True
-
-# test: modify to test vggt inputs
-remaining_x_time = 0.0
-remaining_theta_time = 0.0
-lekiwi_dis_x = 3.196168851852417
-lekiwi_dis_y = 0.3429687
 vggt_mode = True 
 
+# test: modify to test vggt inputs manually
+remaining_x_time = 0.0
+remaining_theta_time = 0.0
+with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "dis_output.py")), 'r') as f: 
+    lekiwi_dis_y = float(f.readline().split('=')[1].strip()) # lekiwi takes y forward so switch y and x
+    lekiwi_dis_x = float(f.readline().split('=')[1].strip())
 
 while True:
+    start_time = time.time()
     t0 = time.perf_counter()
 
     observation = robot.get_observation()
@@ -52,12 +48,26 @@ while True:
     arm_action = {f"arm_{k}": v for k, v in arm_action.items()}
 
     # Save wrist camera image: uncomment for saving wrist camera images
-    # wrist_image = observation["wrist"]
-    # wrist_image_path = os.path.join(folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
-    # cv2.imwrite(wrist_image_path, wrist_image)
-    # print(f"Saved wrist camera image to {wrist_image_path}")
+    wrist_image = observation["wrist"]
+    folder = 'wrist_images'
+    os.makedirs(folder, exist_ok=True)
+    wrist_image_path = os.path.join(folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
+    cv2.imwrite(wrist_image_path, wrist_image)
+    print(f"Saved wrist camera image to {wrist_image_path}")
 
-    # #save action 
+    # write last image to vggt
+    if time.time() - start_time <= 5:
+        vggt_img_folder = "vggt/images"
+        os.makedirs(vggt_img_folder, exist_ok=True)
+        vggt_image_path = os.path.join(vggt_img_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
+        cv2.imwrite(vggt_image_path, wrist_image)
+        print(f"Saved vggt image to {vggt_image_path}")
+
+
+    # save action: only enable this when the arm pose needs recalibration to film at a better angle 
+    # folder = 'actions'
+    # os.makedirs(folder, exist_ok=True)
+    #action_path = os.path.join(folder, "actions.txt")
     # action_log = {
     #     "arm_action": arm_action
     # }
@@ -66,7 +76,7 @@ while True:
     #     f.write(json.dumps(action_log) + "\n")
     # print("Arm action appended:", arm_action)
 
-    if freeze_pose:
+    if freeze_pose: # replace arm pose if needed
         arm_action = {'arm_shoulder_pan.pos': 13.299418604651152, 'arm_shoulder_lift.pos': -5.021645021645028, 'arm_elbow_flex.pos': -77.10131758291686, 'arm_wrist_flex.pos': 0.2439024390243958, 'arm_wrist_roll.pos': -30.793650793650798, 'arm_gripper.pos': 98.67424242424242}
     else:
         pass
