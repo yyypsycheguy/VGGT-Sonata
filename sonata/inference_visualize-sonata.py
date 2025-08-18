@@ -252,7 +252,7 @@ if __name__ == "__main__":
 
 
     # get coords of target class
-    frame_dis = 1.45 #3.1
+    frame_dis = 1.45 # measured frame distance of le kiwi; 3.1m for apply iPhone video recording, dis of blind angle from camera to bottom of video frame
     floor_coords = get_coords_by_class(point, "chair")
     print(f"\n Max chair coords: {max(floor_coords[:, 2])}, min chair coords: {min(floor_coords[:, 2])}")
     max_index = np.argmax(floor_coords[:, 2])
