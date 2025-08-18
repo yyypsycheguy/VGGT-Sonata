@@ -252,7 +252,7 @@ if __name__ == "__main__":
 
 
     # get coords of target class
-    frame_dis = 3.1
+    frame_dis = 1.45 #3.1
     floor_coords = get_coords_by_class(point, "chair")
     print(f"\n Max chair coords: {max(floor_coords[:, 2])}, min chair coords: {min(floor_coords[:, 2])}")
     max_index = np.argmax(floor_coords[:, 2])
