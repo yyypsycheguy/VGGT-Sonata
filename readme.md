@@ -1,4 +1,4 @@
-# CV models VGGT-Sonata pipeline use on robotics spatial navigation
+# Using CV models: VGGT-Sonata pipeline for zero-shot robotics spatial navigation
 
 This repository proposes a pipeline that enables 3D scene reconstruction from one single image or a video, with a simple RBG camera predict object depth, and achieve semantic segmentation of objects in the scene. It does this by running VGGT model inference, and feeds the output into Sonata which does the segmentation. Then in the repository, we use Lekiwi robot from LeRobot Hugging Face to autonomously have lekiwi navigate to any given target object.
 
