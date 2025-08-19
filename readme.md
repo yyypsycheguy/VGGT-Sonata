@@ -4,7 +4,7 @@ This repository proposes a pipeline that enables 3D scene reconstruction from on
 
 Before running the pipeline, remember to set up dependencies for VGGT and Sonata, as well as lekiwi.
 
-## Setup for [VGGT] (https://github.com/facebookresearch/vggt.git) -- Visual Geometry Grounded Transformer
+## Setup for [VGGT](https://github.com/facebookresearch/vggt.git) -- Visual Geometry Grounded Transformer
 ```
 cd vggt
 uv pip install -r requirements.txt
@@ -18,7 +18,7 @@ uv pip install ruff
 source .venv/bin/activate
 ```
 
-## Setup for [Sonata] (https://github.com/facebookresearch/sonata.git) 
+## Setup for [Sonata](https://github.com/facebookresearch/sonata.git) 
 ```
 uv venv sonata-venv
 source sonata-venv/bin/activate
