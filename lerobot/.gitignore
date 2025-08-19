@@ -174,5 +174,3 @@ outputs/
 # Dev folders
 .cache/*
 
-# Image folder
-/wrist_images/

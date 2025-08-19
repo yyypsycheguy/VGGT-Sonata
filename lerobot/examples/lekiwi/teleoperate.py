@@ -29,111 +29,93 @@ keyboard.connect()
 _init_rerun(session_name="lekiwi_teleop")
 
 freeze_pose = True
-vggt_mode = True 
+vggt_mode = True
+first_iteration = True
 
-# test: modify to test vggt inputs manually
+
 remaining_x_time = 0.0
 remaining_theta_time = 0.0
-with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "dis_output.py")), 'r') as f: 
-    lekiwi_dis_y = float(f.readline().split('=')[1].strip()) # lekiwi takes y forward so switch y and x
-    lekiwi_dis_x = float(f.readline().split('=')[1].strip())
 
+# Get vggt distance
+values = []
+with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../sonata/dis_output.py")), 'r') as f:
+    for line in f:
+        line = line.strip()
+        if line and '=' in line:  # skip empty lines
+            values.append(float(line.split('=')[1].strip()))
+
+lekiwi_dis_x, lekiwi_dis_y = values
+print(lekiwi_dis_y, lekiwi_dis_x)
+
+
+prev_time = time.perf_counter()
 while True:
-    start_time = time.time()
-    t0 = time.perf_counter()
+    # Measure full cycle interval
+    current_time = time.perf_counter()
+    interval = current_time - prev_time
+    prev_time = current_time 
+
+    remaining_x_time = max(0.0, remaining_x_time - interval)
+    remaining_theta_time = max(0.0, remaining_theta_time - interval)
 
     observation = robot.get_observation()
 
+    # Freeze arm pose
     arm_action = leader_arm.get_action()
     arm_action = {f"arm_{k}": v for k, v in arm_action.items()}
+    if freeze_pose:
+        arm_action = {
+            'arm_shoulder_pan.pos': 13.299,
+            'arm_shoulder_lift.pos': -5.022,
+            'arm_elbow_flex.pos': -77.101,
+            'arm_wrist_flex.pos': 0.244,
+            'arm_wrist_roll.pos': -30.794,
+            'arm_gripper.pos': 98.674
+        }
 
-    # Save wrist camera image: uncomment for saving wrist camera images
+    # Save wrist camera image
     wrist_image = observation["wrist"]
-    folder = 'wrist_images'
-    os.makedirs(folder, exist_ok=True)
-    wrist_image_path = os.path.join(folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
+    wrist_folder = 'wrist_images'
+    os.makedirs(wrist_folder, exist_ok=True)
+    wrist_image_path = os.path.join(wrist_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
     cv2.imwrite(wrist_image_path, wrist_image)
-    print(f"Saved wrist camera image to {wrist_image_path}")
 
-    # write last image to vggt
-    if time.time() - start_time <= 5:
-        vggt_img_folder = "vggt/images"
+    # Save image for VGGT
+    if time.time() - current_time <= 5:
+        vggt_img_folder = "../../../vggt/images"
         os.makedirs(vggt_img_folder, exist_ok=True)
         vggt_image_path = os.path.join(vggt_img_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
         cv2.imwrite(vggt_image_path, wrist_image)
-        print(f"Saved vggt image to {vggt_image_path}")
-
-
-    # save action: only enable this when the arm pose needs recalibration to film at a better angle 
-    # folder = 'actions'
-    # os.makedirs(folder, exist_ok=True)
-    #action_path = os.path.join(folder, "actions.txt")
-    # action_log = {
-    #     "arm_action": arm_action
-    # }
-
-    # with open(action_path, 'a') as f:
-    #     f.write(json.dumps(action_log) + "\n")
-    # print("Arm action appended:", arm_action)
-
-    if freeze_pose: # replace arm pose if needed
-        arm_action = {'arm_shoulder_pan.pos': 13.299418604651152, 'arm_shoulder_lift.pos': -5.021645021645028, 'arm_elbow_flex.pos': -77.10131758291686, 'arm_wrist_flex.pos': 0.2439024390243958, 'arm_wrist_roll.pos': -30.793650793650798, 'arm_gripper.pos': 98.67424242424242}
-    else:
-        pass
 
     if vggt_mode:
-        keyboard_keys = keyboard.get_action()
+        if first_iteration:
+            keyboard_keys = keyboard.get_action()
 
-        # Only get a new movement command when both timers are 0
-        if remaining_x_time <= 0 and remaining_theta_time <= 0:
-            base_action, xy_speed, theta_speed, x_duration,theta_duration = robot._from_keyboard_to_base_action_vggt(
+            base_action, xy_speed, theta_speed, remaining_x_time, remaining_theta_time = robot._from_keyboard_to_base_action_vggt(
                 pressed_keys=keyboard_keys,
                 dis_y=lekiwi_dis_y,
-                dis_x=lekiwi_dis_x,
+                dis_x=lekiwi_dis_x
             )
-            remaining_x_time = x_duration
-            remaining_theta_time = theta_duration
-            print(f"New base action: {base_action}, x_duration: {x_duration:.2f}, theta_duration: {theta_duration:.2f}, xy_speed: {xy_speed}, theta_speed: {theta_speed}")
+            remaining_x_time+= 3
+            first_iteration = False
+
+        # Keep moving until both times finish
+        if remaining_x_time > 0 or remaining_theta_time > 0:
+            base_action["x.vel"] = xy_speed if remaining_x_time > 0 else 0.0
+            base_action["theta.vel"] = theta_speed if remaining_theta_time > 0 else 0.0
         else:
-            # Continue previous motion
-            pass
-
-
-    if not vggt_mode or (remaining_x_time <= 0 and remaining_theta_time <= 0):
+            base_action = {"x.vel": 0.0, "y.vel": 0.0, "theta.vel": 0.0}
+    else:
         keyboard_keys = keyboard.get_action()
         base_action = robot._from_keyboard_to_base_action(keyboard_keys)
 
-    log_rerun_data(observation, {**arm_action, **base_action})
-    action = {**arm_action, **base_action} if len(base_action) > 0 else arm_action
+
+    action = {**arm_action, **base_action}
     robot.send_action(action)
+    print(f"Remaining X: {remaining_x_time:.2f}s, Remaining Theta: {remaining_theta_time:.2f}s")
 
-    # Countdown timers based on loop duration
-    interval = time.perf_counter() - t0
-    if vggt_mode:
-        if remaining_x_time > 0:
-            remaining_x_time -= interval
-            if remaining_x_time <= 0:
-                base_action["x.vel"] = 0.0
+    busy_wait(1.0 / FPS)
 
-        if remaining_theta_time > 0:
-            remaining_theta_time -= interval
-            if remaining_theta_time <= 0:
-                base_action["theta.vel"] = 0.0
-
-        print(f"b4 loop x speed: {xy_speed:.2f} m/s")
-        remaining_theta_time = max(0.0, remaining_theta_time - interval)
-        remaining_x_time = max(0.0, remaining_x_time - interval)
-
-        if remaining_theta_time > 0: # rotation
-            base_action["x.vel"] = 0.0
-        elif remaining_x_time > 0: # forward
-            base_action["theta.vel"] = 0.0
-            base_action["x.vel"] = xy_speed
-            print(f'x speed: {xy_speed:.2f} m/s')
-        else:
-            base_action["x.vel"] = 0.0
-            base_action["theta.vel"] = 0.0
-
-        print(f"Remaining theta: {remaining_theta_time:.2f}s, Remaining x: {remaining_x_time:.2f}s")
-
-    busy_wait(max(1.0 / FPS - interval, 0.0))
+    if remaining_x_time == 0.0 and remaining_theta_time == 0.0:
+        print("Motion complete. Robot stopped.")
+        break

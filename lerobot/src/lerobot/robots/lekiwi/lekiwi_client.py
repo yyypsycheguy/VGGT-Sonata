@@ -315,6 +315,7 @@ class LeKiwiClient(Robot):
         speed_setting = self.speed_levels[self.speed_index]
         xy_speed = speed_setting["xy"]
         theta_speed = speed_setting["theta"]
+        print(f"Speed level: {self.speed_index}, xy_speed: {xy_speed}, theta_speed: {theta_speed}")
 
         # calculate theta
         target_angle = math.degrees(math.atan2(dis_y, dis_x)) 
