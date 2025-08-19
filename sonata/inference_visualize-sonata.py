@@ -234,7 +234,7 @@ if __name__ == "__main__":
 
 
     # get coords of target class
-    frame_dis = 1.45 # measured frame distance of le kiwi; 3.1m for apply iPhone video recording, dis of blind angle from camera to bottom of video frame
+    frame_dis = 1.45 # measured frame distance of le kiwi; 3.1m for iPhone video recording, dis of blind angle from camera to bottom of video frame
     target = "chair"
     target_coords = get_coords_by_class(point, target) # modify to get coords of target class
     print(f"\n Max {target} coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}")
