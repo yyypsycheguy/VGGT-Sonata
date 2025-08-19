@@ -7,9 +7,9 @@ Before running the pipeline, remember to set up dependencies for VGGT and Sonata
 ## Setup for [VGGT](https://github.com/facebookresearch/vggt.git) -- Visual Geometry Grounded Transformer
 ```
 cd vggt
+uv venv .venv
 uv pip install -r requirements.txt
 uv pip install -r requirements_demo.txt
-uv venv .venv
 
 # Install a package in the new virtual environment if needed
 uv pip install ruff
@@ -27,13 +27,13 @@ source sonata-venv/bin/activate
 
 # CUDA_VERSION: cuda version of local environment (e.g., 124), check by running 'nvcc --version'
 # TORCH_VERSION: torch version of local environment (e.g., 2.5.0), check by running 'python -c "import torch; print(torch.__version__)"'
-pip install spconv-cu${CUDA_VERSION}
-pip install torch-scatter -f https://data.pyg.org/whl/torch-{TORCH_VERSION}+cu${CUDA_VERSION}.html
-pip install git+https://github.com/Dao-AILab/flash-attention.git
-pip install huggingface_hub timm
+uv pip install spconv-cu${CUDA_VERSION}
+uv pip install torch-scatter -f https://data.pyg.org/whl/torch-{TORCH_VERSION}+cu${CUDA_VERSION}.html
+uv pip install git+https://github.com/Dao-AILab/flash-attention.git
+uv pip install huggingface_hub timm
 
 # (optional, or directly copy the sonata folder to your project)
-python setup.py install
+uv python setup.py install
 ```
 
 Please refer to original [Sonata](https://github.com/facebookresearch/sonata.git) repository for trouble shooting.
@@ -71,4 +71,4 @@ frame_dis = 1.45 # measured frame distance of le kiwi; around 3.1m for iPhone vi
 # modify this as well
 target = "chair"
 ```
-into the furniture you would like to track, that is in the view of the camera and in the proposed categories of Sonata.
+Also modify into the furniture you would like to track, that is in the view of the camera and in the proposed categories of Sonata.
