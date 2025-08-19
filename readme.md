@@ -59,7 +59,7 @@ chmod +x bash-command.sh
 ```
 This takes photo inputs from your lekiwi robot, runs inference with vggt & sonata, gives the input calibrated distance for lekiwi to execute.
 
-# Parameter modification
+### Parameter modification
 If you are using other machines/robots to take input pictures, you have to modify this parameter: located at 
 ```
 cd sonata/inference_visualize-sonata.py
