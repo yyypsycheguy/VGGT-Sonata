@@ -36,7 +36,7 @@ pip install huggingface_hub timm
 python setup.py install
 ```
 
-Please refer to original [Sonata] (https://github.com/facebookresearch/sonata.git) repository for trouble shooting.
+Please refer to original [Sonata](https://github.com/facebookresearch/sonata.git) repository for trouble shooting.
 
 ## Setup for [lerobot directory](https://huggingface.co/docs/lerobot/installation) & run to do spatial navigation by targeting specific objects
 
