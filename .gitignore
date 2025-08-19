@@ -157,7 +157,6 @@ skyseg.onnx
 *.pt
 *.jpg
 *.png
-images/
 video/
 
 graph.py
@@ -177,3 +176,134 @@ vggt/plot-test-after.py
 vggt/plot-test.py
 vggt/plot-test.py
 vggt/plot-track.py
+
+# ----------------------- ignore files from lerobot -------------------------
+### Environments & Dependencies ###
+lerobot/.env
+lerobot/.venv
+lerobot/env/
+lerobot/venv/
+lerobot/env.bak/
+lerobot/venv.bak/
+lerobot/.python-version
+lerobot/__pypackages__/
+lerobot/node_modules/
+
+# Lock files
+lerobot/poetry.lock
+lerobot/uv.lock
+lerobot/Pipfile.lock
+
+### Build & Distribution ###
+lerobot/build/
+lerobot/dist/
+lerobot/sdist/
+lerobot/wheels/
+lerobot/downloads/
+lerobot/eggs/
+lerobot/.eggs/
+lerobot/parts/
+lerobot/var/
+lerobot/pip-wheel-metadata/
+lerobot/share/python-wheels/
+lerobot/develop-eggs/
+lerobot/*.egg-info/
+lerobot/.installed.cfg
+lerobot/*.egg
+lerobot/MANIFEST
+lerobot/lib/
+lerobot/lib64/
+
+# PyInstaller
+lerobot/*.manifest
+lerobot/*.spec
+
+### Compiled & Cached Files ###
+lerobot/__pycache__/
+lerobot/*.py[cod]
+lerobot/*$py.class
+lerobot/*.so
+lerobot/*.sage.py
+lerobot/.cache/
+lerobot/.ruff_cache/
+lerobot/.mypy_cache/
+lerobot/.pyre/
+lerobot/.pytype/
+lerobot/cython_debug/
+
+### Testing & Coverage ###
+lerobot/htmlcov/
+lerobot/.tox/
+lerobot/.nox/
+lerobot/.coverage
+lerobot/.coverage.*
+lerobot/.pytest_cache/
+lerobot/.hypothesis/
+lerobot/nosetests.xml
+lerobot/coverage.xml
+lerobot/*.cover
+lerobot/*.py,cover
+!lerobot/tests/artifacts
+
+### Logs & Temporary Files ###
+lerobot/logs/
+lerobot/tmp/
+lerobot/*.log
+lerobot/pip-log.txt
+lerobot/pip-delete-this-directory.txt
+lerobot/celerybeat-schedule
+lerobot/celerybeat.pid
+
+### IDE & Editor Config ###
+# VS Code
+lerobot/.vscode/
+lerobot/.devcontainer/
+
+# JetBrains / PyCharm
+lerobot/.idea/
+
+# Spyder
+lerobot/.spyderproject
+lerobot/.spyproject
+
+# Rope
+lerobot/.ropeproject/
+
+# Vim
+lerobot/*.swp
+
+# Other
+*~
+
+### OS Specific ###
+# macOS
+lerobot/.DS_Store
+
+# Windows
+lerobot/Thumbs.db
+
+### Framework & Tool Specific ###
+lerobot/.Python
+
+# Django
+lerobot/local_settings.py
+lerobot/db.sqlite3
+lerobot/db.sqlite3-journal
+
+# Flask
+lerobot/instance/
+lerobot/.webassets-cache
+
+# Scrapy
+lerobot/.scrapy
+
+# Jupyter
+lerobot/.ipynb_checkpoints/
+lerobot/profile_default/
+lerobot/ipython_config.py
+
+# Sphinx
+lerobot/docs/_build/
+
+# MkDocs
+lerobo

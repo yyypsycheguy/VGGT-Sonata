@@ -236,10 +236,10 @@ if __name__ == "__main__":
     # get coords of target class
     frame_dis = 1.45 # measured frame distance of le kiwi; 3.1m for apply iPhone video recording, dis of blind angle from camera to bottom of video frame
     target = "chair"
-    floor_coords = get_coords_by_class(point, target) # modify to get coords of target class
-    print(f"\n Max {target} coords: {max(floor_coords[:, 2])}, min chair coords: {min(floor_coords[:, 2])}")
-    max_index = np.argmax(floor_coords[:, 2])
-    max_coord = floor_coords[max_index]
+    target_coords = get_coords_by_class(point, target) # modify to get coords of target class
+    print(f"\n Max {target} coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}")
+    max_index = np.argmax(target_coords[:, 2])
+    max_coord = target_coords[max_index]
     print(f"Original max {target} coord: {max_coord}")
     target_calibrated_dis = max_coord[2] + frame_dis
     print(f"Calibrated max {target} depth: {target_calibrated_dis}")
@@ -278,6 +278,9 @@ if __name__ == "__main__":
         f.write(f'scale_factor = {scale_factor}\n')
 
     # Write distance ouput to dis_output.py
-    with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "dis_output.py")), 'w') as f:
-        f.write(f'dis_y = {target_calibrated_dis}\n') # y forward sonata
-        f.write(f'dis_x = {target_right_dis}\n') # x right sonata
+    output_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "dis_output.py"))
+    print("Writing to:", output_path)
+    with open(output_path, 'w') as f:
+        f.write(f'dis_y = {target_calibrated_dis}\n')
+        f.write(f'dis_x = {target_right_dis}\n')
+    print(f"Updated distance: forward:{target_calibrated_dis}, and sideways: {target_right_dis} saved to dis_output.py \n")
