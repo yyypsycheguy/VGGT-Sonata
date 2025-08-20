@@ -6,11 +6,13 @@ This pipeline effectively works on another robots with either cartesian coordina
 
 ### Demo result
 The pipeline reconstructs indoor scene taken from lekiwi's camera with clear segmentation of different furnitures, which are labeled in ```legend.html```. Lekiwi then receives inference result and travels to the right object with accurate distance, all in zero shot.
-![alt text](vggt/images/2025_08_19_12:47:13.jpg) ![alt text](<Screenshot from 2025-08-20 11-07-01.png>)
+![pic](readme-imgs/photo-lekiwi.jpg) ![3d-pointcloud](readme-imgs/point-cloud.png)
 <video controls src="demo.mp4" title="Title"></video>
 
 Navigation can be also be tracked by plotting the camera extrinsic parameters to visualise the camera translation. We will explain how to enable this functionality in sections that follow.
-![alt text](<Screenshot from 2025-08-05 15-14-10.png>)
+![extrinsic](readme-imgs/extrinsic-trajectory.png)
+
+The demo video shows movments executed by lekiwi is visible at ```readme-imgs/demo.mp4```.
 
 ## Installation:
 Clone this repository to local by running:
@@ -87,7 +89,7 @@ pip install -e ".[lekiwi]"
 
 Now you have lerobot setup on your local machine, you have to do the same of the Raspberry Pi by repeating the same instructions as above. In addition if you need to setup the hardware, please refer to [lewiki](https://huggingface.co/docs/lerobot/lekiwi) operation guide.
 
-#### Parameter modification
+## Parameter modification
 There are three main files respectively for VGGT, Sonata inference and lekiwi teleoperation. Let's dive into each one to make sure some parameters are correct according to your own hardware.
 
 1. In lekiwi directory, make sure you have set the correct remote_ip and port in examples/lekiwi/teleoperate.py. 

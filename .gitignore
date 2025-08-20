@@ -307,3 +307,9 @@ lerobot/docs/_build/
 
 # MkDocs
 lerobo
+
+
+# ------------------------ images on readme ------------------------
+!readme-imgs/extrinsic-trajectory.png
+!readme-imgs/photo-lekiwi.jpg
+!readme-imgs/point-cloud.png
