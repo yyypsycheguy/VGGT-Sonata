@@ -154,5 +154,4 @@ skyseg.onnx
 *.pt
 *.jpg
 *.png
-images/
 video/

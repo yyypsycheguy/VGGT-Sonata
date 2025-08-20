@@ -11,19 +11,6 @@ from vggt.utils.geometry import unproject_depth_map_to_point_map
 from vggt.utils.geometry import depth_to_world_coords_points
 from vggt.utils.geometry import closed_form_inverse_se3
 
-# only uncomment when using reachy
-'''scale_factor = float(input('scale factor (meters):'))
-cam_frame_dis = float(input('Distance from camera to edge of floor (meters):'))
-if scale_factor <= 0 or cam_frame_dis <= 0:
-    raise ValueError("Scale factor and camera frame distance must be positive numbers.")
-if scale_factor < cam_frame_dis:
-    raise ValueError("Scale factor must be greater than camera frame distance.")
-if isinstance(scale_factor or cam_frame_dis, (int, float)) is False:
-    raise TypeError("Scale factor and camera frame distance must be of type float.")'''
-
-'''with open("share_var.py", "w") as f:
-    f.write(f"cam_frame_dis = {cam_frame_dis}")'''
-
     
 device = "cuda" if torch.cuda.is_available() else "cpu"
 dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
@@ -48,7 +35,6 @@ with torch.no_grad():
         aggregated_tokens_list, ps_idx = model.aggregator(images)
         print(f'ps_idx: {ps_idx}')  # [B, S, P]
                 
-    # Predict Cameras
     pose_enc = model.camera_head(aggregated_tokens_list)[-1]
  
     # Extrinsic and intrinsic matrices, following OpenCV convention (camera from world)
@@ -79,22 +65,12 @@ with torch.no_grad():
     intrinsic = intrinsic[0]  # [S, 3, 3]
     extrinsic_homo = extrinsic_homo[0]  # extrinsic but shape [S,4,4]
     t_extrinsic = extrinsic[:, :3, 3]  # [B, S, 3]
-    #print(f'Etrinsic translation unscaled: {t_extrinsic}')
 
     vggt_raw_output = unproject_depth_map_to_point_map(
         depth_map,
         extrinsic,
         intrinsic
     )
-
-    # keypoint tracking
-    '''_, _, _, H, W = images.shape
-    x_center = H/2
-    y_center = W/2
-    query_points = torch.tensor([[x_center, y_center]]).to(device)
-    print(f'query point shape: {query_points.shape}')
-    track_list, vis_score, conf_score = model.track_head(aggregated_tokens_list, images, ps_idx, query_points[None])
-    print(f'Points tracked in each images: {track_list}')'''
 
 
 def unproject_depth_map_to_point_map_index(
@@ -170,10 +146,9 @@ point_map_by_unprojection, t_extrinsic_scaled = unproject_depth_map_to_point_map
 
 
 torch.save(t_extrinsic_scaled, 't_extrinsic_scaled.pt')
-print(f't cam-to-world scaled of extrinsic: {t_extrinsic_scaled}')
+# print(f't cam-to-world scaled extrinsics: {t_extrinsic_scaled}') # uncomment if like to visualise
 print(f'Translation part of extrinsic saved to: t_extrinsic_scaled.pt')
 
-#open(path, "w").close() # clears sf content
 
 # -------------------------- Convert VGGT point map to SONATA format -----------------------------
 def convert_vggt_to_sonata(point_map_by_unprojection: np.ndarray, images= not None, conf_threshold= math.inf):
@@ -236,7 +211,7 @@ else:
 for key, value in sonata_data.items():
     if isinstance(value, (torch.Tensor, np.ndarray)):
         print(f"{key}: shape = {value.shape}")
-#torch.save(sonata_data, "predictions.pt")
+        
 torch.save(sonata_data, "predictions.pt")
 
 print(sonata_data.keys())

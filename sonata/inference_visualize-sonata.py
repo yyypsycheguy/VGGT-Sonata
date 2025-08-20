@@ -169,10 +169,8 @@ if __name__ == "__main__":
         ),
     ]
     transform = sonata.transform.Compose(config)
-    # transform = sonata.transform.default()
 
     # Load data
-    #point = torch.load("../vggt/predictions.pt")
     point = torch.load("../vggt/predictions.pt")
     print(point.keys())
     point["coord"] = point["coord"].numpy()
@@ -210,7 +208,6 @@ if __name__ == "__main__":
     pcd.points = o3d.utility.Vector3dVector(point.coord.cpu().detach().numpy())
     pcd.colors = o3d.utility.Vector3dVector(color / 255)
     o3d.visualization.draw_geometries([pcd])
-    # o3d.io.write_point_cloud("sem_seg.ply", pcd)
 
     # Save results
     torch.save(point, "results.pt")
@@ -234,7 +231,7 @@ if __name__ == "__main__":
 
 
     # get coords of target class
-    frame_dis = 1.45 # measured frame distance of le kiwi; 3.1m for iPhone video recording, dis of blind angle from camera to bottom of video frame
+    frame_dis = 1.45 # modify if needed
     target = "chair"
     target_coords = get_coords_by_class(point, target) # modify to get coords of target class
     print(f"\n Max {target} coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}")
