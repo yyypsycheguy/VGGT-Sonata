@@ -120,7 +120,7 @@ There are three main files respectively for VGGT, Sonata inference and lekiwi te
     ```
     # print(f't cam-to-world scaled extrinsics: {t_extrinsic_scaled}') # uncomment if would like to visualise
     ```
-    t_extrinsic_scaled[0] column refers to x-axis (right), t_extrinsic_scaled[1] being y-axis (towards), t_extrinsic_scaled[2] being z-axis (up).
+    ```t_extrinsic_scaled[0]``` column refers to x-axis (right), ```t_extrinsic_scaled[1]``` being y-axis (towards), ```t_extrinsic_scaled[2]``` being z-axis (up).
 
 
 ## Running the pipeline: 
