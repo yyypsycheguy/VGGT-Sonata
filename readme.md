@@ -96,31 +96,31 @@ There are three main files respectively for VGGT, Sonata inference and lekiwi te
 
 1. In lekiwi directory, make sure you have set the correct remote_ip and port in examples/lekiwi/teleoperate.py. 
 
-2. If you are using other machines/robots to take input pictures, you have to modify this parameter: located at 
-```
-cd sonata/inference_visualize-sonata.py
-```
-which is the Sonata inference file. You need to manually measure frame_dis:
-```
-frame_dis = 1.45 # no need to change if you are using lekiwi, using arm pose proposed by the pipeline
-```
-Which is the distance of the blind angle from camera to the bottom of video frame. Think about when you dont see the ground immediately below in your video until some distance away. It is 1.45m measured from le kiwi with extended arm; around 3.1m for iPhone video recording, held at 150cm above the ground.
+2. If you are using other machines/robots to take input pictures, you have to modify this parameter at:
+    ```
+    cd sonata/inference_visualize-sonata.py
+    ```
+    which is the Sonata inference file. You need to manually measure frame_dis:
+    ```
+    frame_dis = 1.45 # no need to change if you are using lekiwi, using arm pose proposed by the pipeline
+    ```
+    Which is the distance of the blind angle from camera to the bottom of video frame. Think about when you dont see the ground immediately below in your video until some distance away. It is 1.45m measured from le kiwi with extended arm; around 3.1m for iPhone video recording, held at 150cm above the ground.
 
 3. Modify the furniture you would like to track in the view of camera, and in the proposed categories of Sonata. 
-```
-target = "chair"
-```
-Categories proposed by Sonata are marked in ``` legend.html ```.
+    ```
+    target = "chair"
+    ```
+    Categories proposed by Sonata are marked in ``` legend.html ```.
 
 4. We also propose a functionality to view the camera trajectory: eg. robot translation. It is located at:
-```
- cd vggt/vggt_inference_floor.py
-```
-Extrinsic tracks camera position as a series of tensor. You can then plot it to visualise.
-```
-# print(f't cam-to-world scaled extrinsics: {t_extrinsic_scaled}') # uncomment if would like to visualise
-```
-t_extrinsic_scaled[0] column refers to x-axis (right), t_extrinsic_scaled[1] being y-axis (towards), t_extrinsic_scaled[2] being z-axis (up).
+    ```
+    cd vggt/vggt_inference_floor.py
+    ```
+    Extrinsic tracks camera position as a series of tensor. You can then plot it to visualise.
+    ```
+    # print(f't cam-to-world scaled extrinsics: {t_extrinsic_scaled}') # uncomment if would like to visualise
+    ```
+    t_extrinsic_scaled[0] column refers to x-axis (right), t_extrinsic_scaled[1] being y-axis (towards), t_extrinsic_scaled[2] being z-axis (up).
 
 
 ## Running the pipeline: 
