@@ -60,7 +60,7 @@ uv python setup.py install
 ```
 Please refer to original [Sonata](https://github.com/facebookresearch/sonata.git) repository for trouble shooting.
 
-### Setup for [lerobot directory](https://huggingface.co/docs/lerobot/installation) & run to do spatial navigation by targeting specific objects
+### Setup for [lerobot directory](https://huggingface.co/docs/lerobot/installation)
 
 If first time setting up lekiwi please refer to Hugging Face Lerobot installation guide first for details. Lekiwi works by having a leader arm guiding the motions of the follower arm with mobile base. On your laptop, you have to first SSH into the Raspberry Pi on the follower arm mobile base, as well as connect the laptop to the leader arm to start teleoperating. We also need to teleoperate it, though the pipeline disregards actions received from the leader arm, because we would only need the follower arm to raise straight up, and travel spontaneously the distance infered by VGGT-Sonata.
 
