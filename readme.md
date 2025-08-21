@@ -11,10 +11,10 @@ Navigation can be also be tracked by plotting the camera extrinsic parameters to
 <table>
 <tr>
   <td><img src="readme-imgs/photo-lekiwi.jpg" width="200" height="300" /></td>
-  <td width="50"></td>
+  <td width="40"></td>
   <td><img src="readme-imgs/point-cloud.png" width="300" height="300" /></td>
-  <td width="50"></td>
-  <td><img src="readme-imgs/extrinsic-trajectory.png" width="300" height="300" /></td>
+  <td width="40"></td>
+  <td><img src="readme-imgs/extrinsic-trajectory.png" width="400" height="400" /></td>
 </tr>
 </table>
 
