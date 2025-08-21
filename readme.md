@@ -4,7 +4,7 @@ This repository proposes a pipeline that enables 3D scene reconstruction from on
 
 This pipeline effectively works on another robots with either cartesian coordinate system, or like lekiwi with planar coordinate system with polar orientation. However, to operate on Cartesian system, some code modification needs to be carried out.
 
-### Demo result
+### Demo results
 The pipeline reconstructs indoor scene taken from lekiwi's camera with clear segmentation of different furnitures, which are labeled in ```legend.html```. Lekiwi then receives inference result and travels to the right object with accurate distance, all in zero shot. 
 <p align="center">
   <img src="readme-imgs/photo-lekiwi.jpg" width="200" height="300"/>
@@ -27,14 +27,18 @@ Before running the pipeline, remember to set up dependencies for VGGT and Sonata
 ```
 cd vggt
 uv venv .venv
+source .venv/bin/activate
 uv pip install -r requirements.txt
 uv pip install -r requirements_demo.txt
 
 # Install a package in the new virtual environment if needed
 uv pip install ruff
 
-# to activate 
-source .venv/bin/activate
+```
+Also create an image folder for later use:
+```
+cd vggt
+mkdir images
 ```
 
 ### Setup for [Sonata](https://github.com/facebookresearch/sonata.git) 
@@ -52,11 +56,16 @@ source sonata-venv/bin/activate
 
 uv pip install spconv-cu${CUDA_VERSION}
 uv pip install torch-scatter -f https://data.pyg.org/whl/torch-{TORCH_VERSION}+cu${CUDA_VERSION}.html
-uv pip install git+https://github.com/Dao-AILab/flash-attention.git
+
+# install flash attention
+uv pip install torch psutil packaging ninja
+uv pip install git+https://github.com/Dao-AILab/flash-attention.git --no-build-isolation
 uv pip install huggingface_hub timm
 
 # (optional, or directly copy the sonata folder to your project)
 uv python setup.py install
+
+uv pip install open3d fast_pytorch_kmeans psutil numpy==1.26.4  # currently, open3d does not support numpy 2.x
 ```
 Please refer to original [Sonata](https://github.com/facebookresearch/sonata.git) repository for trouble shooting.
 

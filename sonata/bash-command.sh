@@ -2,11 +2,11 @@
 set -e  # exit on any error
 
 # lekiwi get images
-# cd ../lerobot
-# source ~/miniconda3/etc/profile.d/conda.sh
-# conda activate lerobot
-# python examples/lekiwi/teleoperate_collect_imgs.py
-# conda deactivate
+cd ../lerobot
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate lerobot
+python examples/lekiwi/teleoperate_collect_imgs.py
+conda deactivate
 
 counter=0
 
@@ -46,8 +46,8 @@ if [ $counter -eq 2 ]; then
     echo "scale_factor reset to 1.0 "
 fi
 
-# # operate lekiwi
-# cd ../lerobot
-# conda activate lerobot
-# python examples/lekiwi/teleoperate.py
-# conda deactivate
+# operate lekiwi
+cd ../lerobot
+conda activate lerobot
+python examples/lekiwi/teleoperate.py
+conda deactivate
