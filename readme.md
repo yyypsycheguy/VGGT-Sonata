@@ -7,7 +7,7 @@ This pipeline effectively works on another robots with either cartesian coordina
 ### Demo results:
 The pipeline reconstructs indoor scene taken from lekiwi's camera with clear segmentation of different furnitures, which are labeled in ```legend.html```. Lekiwi then receives inference result and travels to the right object with accurate distance, all in zero shot. 
 <p align="center">
-  <img src="readme-imgs/photo-lekiwi.jpg" width="200" height="300"/>
+  <img src="readme-imgs/photo-lekiwi.jpg" width="200" height="400"/>
   <img src="readme-imgs/point-cloud.png" width="300" height="300"/>
 </p>
 
