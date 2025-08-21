@@ -6,10 +6,13 @@ This pipeline effectively works on another robots with either cartesian coordina
 
 ### Demo results:
 The pipeline reconstructs indoor scene taken from lekiwi's camera with clear segmentation of different furnitures, which are labeled in ```legend.html```. Lekiwi then receives inference result and travels to the right object with accurate distance, all in zero shot. 
-<p align="center">
-  <img src="readme-imgs/photo-lekiwi.jpg" width="200" height="400"/>
-  <img src="readme-imgs/point-cloud.png" width="300" height="300"/>
-</p>
+<table>
+<tr>
+<td><img src="readme-imgs/photo-lekiwi.jpg" width="200" height="300" /></td>
+<td width="50"></td>
+<td><img src="readme-imgs/point-cloud.png" width="300" height="300" /></td>
+</tr>
+</table>
 
 Navigation can be also be tracked by plotting the camera extrinsic parameters to visualise the camera translation. We will explain how to enable this functionality in sections that follow. The demo video shows movments executed by lekiwi is visible at ```readme-imgs/demo.mp4```.
 <p align="center">
