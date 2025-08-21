@@ -114,7 +114,10 @@ There are three main files respectively for VGGT, Sonata inference and lekiwi te
     ```
     frame_dis = 1.45 # no need to change if you are using lekiwi, using arm pose proposed by the pipeline
     ```
-    Which is the distance of the blind angle from camera to the bottom of video frame. Think about when you dont see the ground immediately below in your video until some distance away. It is 1.45m measured from le kiwi with extended arm; around 3.1m for iPhone video recording, held at 150cm above the ground.
+    This is the distance from the camera to the point where the video frame first shows the ground. In other words, it’s how far away the ground appears in the video because the area immediately below the camera is “blind” to the view. For example:
+    - LeKiwi robot camera on SO100 wrist (with extended arm): 1.45 m
+    - iPhone (held at 1.5 m above the ground): ~3.1 m
+    Why it matters: VGGT doesn't inherently know that the ground in the image is actually a certain distance away. To get accurate real-world measurements, we need to add this blind distance to the model’s output.
 
 3. Modify the furniture you would like to track in the view of camera, and in the proposed categories of Sonata. 
     ```
