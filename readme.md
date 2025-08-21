@@ -1,10 +1,10 @@
 # <p style="text-align:center;">Using CV models: VGGT-Sonata pipeline for zero-shot robotics spatial navigation</p>
-## Overview
+## Overview:
 This repository proposes a pipeline that enables 3D scene reconstruction from one single image or a video, with a simple RBG camera predict object depth, and achieve semantic segmentation of objects in the scene. It does this by running **[VGGT](https://github.com/facebookresearch/vggt.git)** model inference, and feeds the output into **[Sonata](https://github.com/facebookresearch/sonata.git)** which does the segmentation. Then in the repository, we use Lekiwi robot from LeRobot Hugging Face to autonomously have lekiwi navigate to any given target object. 
 
 This pipeline effectively works on another robots with either cartesian coordinate system, or like lekiwi with planar coordinate system with polar orientation. However, to operate on Cartesian system, some code modification needs to be carried out.
 
-### Demo results
+### Demo results:
 The pipeline reconstructs indoor scene taken from lekiwi's camera with clear segmentation of different furnitures, which are labeled in ```legend.html```. Lekiwi then receives inference result and travels to the right object with accurate distance, all in zero shot. 
 <p align="center">
   <img src="readme-imgs/photo-lekiwi.jpg" width="200" height="300"/>
@@ -33,7 +33,6 @@ uv pip install -r requirements_demo.txt
 
 # Install a package in the new virtual environment if needed
 uv pip install ruff
-
 ```
 Also create an image folder for later use:
 ```
