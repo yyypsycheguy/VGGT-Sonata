@@ -20,6 +20,9 @@ import torch.nn as nn
 
 import sonata
 
+with torch.no_grad():
+    torch.cuda.empty_cache()
+    
 try:
     import flash_attn
 except ImportError:
@@ -234,13 +237,17 @@ if __name__ == "__main__":
     frame_dis = 1.45 # modify if needed
     target = "chair"
     target_coords = get_coords_by_class(point, target) # modify to get coords of target class
-    print(f"\n Max {target} coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}")
+    print(f"\nMax {target} coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}")
     max_index = np.argmax(target_coords[:, 2])
     max_coord = target_coords[max_index]
     print(f"Original max {target} coord: {max_coord}")
     target_calibrated_dis = max_coord[2] + frame_dis
     print(f"Calibrated max {target} depth: {target_calibrated_dis}")
+    max_coord[2] = target_calibrated_dis
+    print(f"Calibrated {target} coord xyz coordinate: {max_coord}")
+    
     target_right_dis = max_coord[1]
+    #target_calibrated_dis max_coord[0]
     
 
     # get overall min coord floor
@@ -281,3 +288,5 @@ if __name__ == "__main__":
         f.write(f'dis_y = {target_calibrated_dis}\n')
         f.write(f'dis_x = {target_right_dis}\n')
     print(f"Updated distance: forward:{target_calibrated_dis}, and sideways: {target_right_dis} saved to dis_output.py \n")
+
+    torch.cuda.empty_cache()

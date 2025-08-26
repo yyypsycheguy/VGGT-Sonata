@@ -7,7 +7,7 @@ This pipeline effectively works on another robots with either cartesian coordina
 ### Demo results:
 The pipeline reconstructs indoor scene taken from lekiwi's camera with clear segmentation of different furnitures, which are labeled in ```legend.html```. Lekiwi then receives inference result and travels to the right object with accurate distance, all in zero shot. 
 
-Navigation can be also be tracked by plotting the camera extrinsic parameters to visualise the camera translation. We will explain how to enable this functionality in sections that follow. The demo video shows movments executed by lekiwi is visible at ```readme-imgs/demo.mp4```.
+Navigation can be also be tracked by plotting the camera extrinsic parameters to visualise the camera translation. We will explain how to enable this functionality in sections that follow. A demo video redording how lekiwi travels to the taget is visible at ```readme-imgs/demo.mp4```.
 <table>
 <tr>
   <td><img src="readme-imgs/photo-lekiwi.jpg" width="300" height="400" /></td>
@@ -117,7 +117,7 @@ There are three main files respectively for VGGT, Sonata inference and lekiwi te
     This is the distance from the camera to the point where the video frame first shows the ground. In other words, it’s how far away the ground appears in the video because the area immediately below the camera is “blind” to the view. For example:
     - LeKiwi robot camera on SO100 wrist (with extended arm): 1.45 m
     - iPhone (held at 1.5 m above the ground): ~3.1 m
-    
+
     Why it matters: VGGT doesn't inherently know that the ground in the image is actually a certain distance away. To get accurate real-world measurements, we need to add this blind distance to the model’s output.
 
 3. Modify the furniture you would like to track in the view of camera, and in the proposed categories of Sonata. 

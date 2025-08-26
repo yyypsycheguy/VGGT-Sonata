@@ -31,7 +31,7 @@ _init_rerun(session_name="lekiwi_teleop")
 freeze_pose = True
 start_time = time.time()
 
-while True and time.time() - start_time <= 6:
+while True:
     t0 = time.perf_counter()
 
     observation = robot.get_observation()
@@ -41,6 +41,7 @@ while True and time.time() - start_time <= 6:
 
     # Save wrist camera image: uncomment for saving wrist camera images
     wrist_image = observation["wrist"]
+    wrist_image = cv2.cvtColor(wrist_image, cv2.COLOR_RGB2BGR)
     folder = 'wrist_images'
     os.makedirs(folder, exist_ok=True)
     wrist_image_path = os.path.join(folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
@@ -51,7 +52,7 @@ while True and time.time() - start_time <= 6:
     # save action: only enable this when the arm pose needs recalibration to film at a better angle 
     # folder = 'actions'
     # os.makedirs(folder, exist_ok=True)
-    #action_path = os.path.join(folder, "actions.txt")
+    # action_path = os.path.join(folder, "actions.txt")
     # action_log = {
     #     "arm_action": arm_action
     # }
@@ -75,9 +76,9 @@ while True and time.time() - start_time <= 6:
     interval = time.perf_counter() - t0
     busy_wait(max(1.0 / FPS - interval, 0.0))
 
-# write last image to vggt
-vggt_img_folder = "../vggt/images"
-os.makedirs(vggt_img_folder, exist_ok=True)
-vggt_image_path = os.path.join(vggt_img_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
-cv2.imwrite(vggt_image_path, wrist_image)
-print(f"Saved image to {vggt_image_path}")
+    # write last image to vggt
+    vggt_img_folder = "../vggt/images"
+    os.makedirs(vggt_img_folder, exist_ok=True)
+    vggt_image_path = os.path.join(vggt_img_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
+    cv2.imwrite(vggt_image_path, wrist_image)
+    print(f"Saved image to {vggt_image_path}")

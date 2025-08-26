@@ -64,14 +64,7 @@ while True:
     arm_action = leader_arm.get_action()
     arm_action = {f"arm_{k}": v for k, v in arm_action.items()}
     if freeze_pose:
-        arm_action = {
-            'arm_shoulder_pan.pos': 13.299,
-            'arm_shoulder_lift.pos': -5.022,
-            'arm_elbow_flex.pos': -77.101,
-            'arm_wrist_flex.pos': 0.244,
-            'arm_wrist_roll.pos': -30.794,
-            'arm_gripper.pos': 98.674
-        }
+        arm_action = {"arm_shoulder_pan.pos": -14.752906976744185, "arm_shoulder_lift.pos": -8.91774891774891, "arm_elbow_flex.pos": -68.37800999545661, "arm_wrist_flex.pos": 67.8048780487805, "arm_wrist_roll.pos": 6.764346764346769, "arm_gripper.pos": 98.95833333333334}
 
     # Save wrist camera image
     wrist_image = observation["wrist"]

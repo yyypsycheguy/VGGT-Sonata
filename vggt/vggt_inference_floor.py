@@ -3,6 +3,7 @@ import os
 import numpy as np
 import math
 import torch
+import cv2
 
 from vggt.models.vggt import VGGT
 from vggt.utils.load_fn import load_and_preprocess_images
@@ -11,7 +12,6 @@ from vggt.utils.geometry import unproject_depth_map_to_point_map
 from vggt.utils.geometry import depth_to_world_coords_points
 from vggt.utils.geometry import closed_form_inverse_se3
 
-    
 device = "cuda" if torch.cuda.is_available() else "cpu"
 dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
 
@@ -26,6 +26,18 @@ for img in os.listdir("images"):
         image_names.append(os.path.join("images", img))
 image_names = sorted(image_names) 
 print(f"image names: {image_names}")
+# images = []
+
+# for img in image_names:
+#     im = cv2.imread(img)
+#     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+#     h, w, _ = im.shape
+#     print(f'Image height: {h}, width: {w}')
+
+#     im.resize((int(w/2), int(h/2))) 
+#     images.append(img)
+#     print(f'Image {img} resized to: {int(h/2)}x{int(w/2)}')
+
 images = load_and_preprocess_images(image_names).to(device)
 
 
@@ -33,14 +45,12 @@ with torch.no_grad():
     with torch.cuda.amp.autocast(dtype=dtype):
         images = images[None]  #[B, S, C, H, W]
         aggregated_tokens_list, ps_idx = model.aggregator(images)
-        print(f'ps_idx: {ps_idx}')  # [B, S, P]
                 
     pose_enc = model.camera_head(aggregated_tokens_list)[-1]
  
     # Extrinsic and intrinsic matrices, following OpenCV convention (camera from world)
     extrinsic, intrinsic = pose_encoding_to_extri_intri(pose_enc, images.shape[-2:]) # (B, S, 3, 4) and (B, S, 3, 3)
-    print(f'Extrinsic shape: {extrinsic.shape}')  # [B, S, 3, 4]
-
+    
     B, V = extrinsic.shape[:2]  # [1, 6, 3, 4]
     extrinsic_homo = torch.eye(4, device=device).repeat(B, V, 1, 1)  # [1, 6, 4, 4]
     extrinsic_homo[:, :, :3, :] = extrinsic
@@ -146,7 +156,7 @@ point_map_by_unprojection, t_extrinsic_scaled = unproject_depth_map_to_point_map
 
 
 torch.save(t_extrinsic_scaled, 't_extrinsic_scaled.pt')
-# print(f't cam-to-world scaled extrinsics: {t_extrinsic_scaled}') # uncomment if like to visualise
+print(f't cam-to-world scaled extrinsics: {t_extrinsic_scaled}') # uncomment if like to visualise
 print(f'Translation part of extrinsic saved to: t_extrinsic_scaled.pt')
 
 
