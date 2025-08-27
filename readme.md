@@ -1,5 +1,7 @@
 # <p style="text-align:center;">Using CV models: VGGT-Sonata pipeline for zero-shot robotics spatial navigation</p>
 ## Overview:
+Reconstructing a 3D scene by scanning the environment is applicable in robotics simulation, and potentially enables zero-shot navigation. **[VGGT: Visual Geometry Grounded Transformer](https://github.com/facebookresearch/vggt.git)**  achieves this by predicting scene depth directly from RGB images—without requiring known camera parameters, in a faster and inexpensive way than traditional methods like DUSt3R. 
+
 This repository proposes a pipeline that enables 3D scene reconstruction from one single image or a video, with a simple RBG camera predict object depth, and achieve semantic segmentation of objects in the scene. It does this by running **[VGGT](https://github.com/facebookresearch/vggt.git)** model inference, and feeds the output into **[Sonata](https://github.com/facebookresearch/sonata.git)** which does the segmentation. Then in the repository, we use Lekiwi robot from LeRobot Hugging Face to autonomously have lekiwi navigate to any given target object. 
 
 This pipeline effectively works on another robots with either cartesian coordinate system, or like lekiwi with planar coordinate system with polar orientation. However, to operate on Cartesian system, some code modification needs to be carried out.
@@ -11,6 +13,7 @@ Navigation can be also be tracked by plotting the camera extrinsic parameters to
 # !! need to embed videos
 <table>
 <tr>
+  <td><img src="readme-imgs/vggt_big_scene.png"width="600" height="400"></td>
   <td><img src="readme-imgs/scaled_big_scene.png" width="600" height="400" /></td>
   <td width="40"></td>
   <td><img src="readme-imgs/extrinsic-trajectory.png" width="400" height="400" /></td>
@@ -18,7 +21,7 @@ Navigation can be also be tracked by plotting the camera extrinsic parameters to
 </table>
 
 <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif;">
-  <thead style="background-color: #f2f2f2;">
+  <thead style="background-color:rgb(0, 0, 0);">
     <tr>
       <th>Class ID</th>
       <th>Label</th>
@@ -29,25 +32,16 @@ Navigation can be also be tracked by plotting the camera extrinsic parameters to
     <tr><td>0, 1</td><td>wall</td><td style="background-color: rgb(174,199,232);"></td></tr>
     <tr><td>1, 2</td><td>floor</td><td style="background-color: rgb(152,223,138);"></td></tr>
     <tr><td>2, 3</td><td>cabinet</td><td style="background-color: rgb(31,119,180);"></td></tr>
-    <tr><td>3, 4</td><td>bed</td><td style="background-color: rgb(255,187,120);"></td></tr>
     <tr><td>4, 5</td><td>chair</td><td style="background-color: rgb(188,189,34);"></td></tr>
-    <tr><td>5, 6</td><td>sofa</td><td style="background-color: rgb(140,86,75);"></td></tr>
     <tr><td>6, 7</td><td>table</td><td style="background-color: rgb(255,152,150);"></td></tr>
     <tr><td>7, 8</td><td>door</td><td style="background-color: rgb(214,39,40);"></td></tr>
-    <tr><td>8, 9</td><td>window</td><td style="background-color: rgb(197,176,213);"></td></tr>
-    <tr><td>9 ,10</td><td>bookshelf</td><td style="background-color: rgb(148,103,189);"></td></tr>
-    <tr><td>10, 11</td><td>picture</td><td style="background-color: rgb(196,156,148);"></td></tr>
-    <tr><td>11, 12</td><td>counter</td><td style="background-color: rgb(23,190,207);"></td></tr>
     <tr><td>12, 14</td><td>desk</td><td style="background-color: rgb(247,182,210);"></td></tr>
-    <tr><td>13, 16</td><td>curtain</td><td style="background-color: rgb(219,219,141);"></td></tr>
-    <tr><td>14, 24</td><td>refrigerator</td><td style="background-color: rgb(255,127,14);"></td></tr>
-    <tr><td>15, 28</td><td>shower curtain</td><td style="background-color: rgb(158,218,229);"></td></tr>
-    <tr><td>16, 33</td><td>toilet</td><td style="background-color: rgb(44,160,44);"></td></tr>
-    <tr><td>17, 34</td><td>sink</td><td style="background-color: rgb(112,128,144);"></td></tr>
-    <tr><td>18, 36</td><td>bathtub</td><td style="background-color: rgb(227,119,194);"></td></tr>
+    <tr><td>14, 24</td><td>refrigerator</td><td style="background-color: rgb(255,127,14);"></td><tr>
     <tr><td>19, 39</td><td>otherfurniture</td><td style="background-color: rgb(82,84,163);"></td></tr>
   </tbody>
 </table>
+
+
 
 ## Installation:
 Clone this repository to local by running:
@@ -170,14 +164,14 @@ busy_wait(max(20 / FPS - interval, 0.0))  # modify this for rate of image taking
 ```
 
 ### 2. Running VGGT inference:
+VGGT inference is essential to construct the 3D point cloud predicted from your images. Its inference ouputs world points of which we then transform into input format needed for Sonata, the immediate step that follows.
 ```
 cd vggt
 uv run vggt_inference.py
 ```
 which takes images in ```vggt/images``` to run inference, then stores the predicted 3d point clouds as a pytorch tensor in ```vggt/predictions.pt```.
 
-#### Code explanation:
-A drawback of VGGT point clouds is that their depth is normalised. The coordinate system is defined in regards to the first camera frame, different from the real world metric depth. This impacts robotic manipulation applications where true depth is required. Therefore, we need to compute a scale factor then apply it to our point cloud inthe pipeline. 
+#### Code explanation: 
 This function is triggered when the scale factor is not equal to 1.0:
 ```
 point_map_by_unprojection, t_extrinsic_scaled = unproject_depth_map_to_point_map_index(
@@ -192,11 +186,12 @@ It scales the predicted depth map and the translation part of camera extrinsic, 
 
 
 ### Running Sonata inference: 
+Sonata inference is responsible of sementic segementation of different objects in the scene. Recall in the demo sample point clouds that represents chair is colored in green etc. The model is trained in indoor furniture dataset with categories found in ```legend.html```. 
 ``` 
 cd Sonata
 uv run sonata_inference.py
 ```
-Enables 3d point cloud segmentation by taking input from ```predictions.pt```. It also computes, and stores the scale factor at ```../vggt/share_var.py``` to prepare for calibrating point cloud. 
+Enables 3d point cloud segmentation by taking input from ```predictions.pt```. It also computes, and stores the scale factor at ```../vggt/share_var.py``` to prepare for calibrating point cloud. You shall see the predicted categories in terminal output after running inference.
 
 To visualise the segmentation, run:
 ```
@@ -205,29 +200,52 @@ uv run sonata_visualise.py
 ```
 These two are executed by separate files loading the same point cloud tensor. 
 
-#### Parameter modification:
-1. If you are using other machines/robots to take input pictures, you have to modify this parameter at:
-    ```
-    cd sonata/inference_visualize-sonata.py
-    ```
-    which is the Sonata inference file. You need to manually measure frame_dis:
-    ```
-    frame_dis = 1.45 # no need to change if you are using lekiwi, using arm pose proposed by the pipeline
-    ```
-    This is the distance from the camera to the point where the video frame first shows the ground. In other words, it’s how far away the ground appears in the video because the area immediately below the camera is “blind” to the view. For example:
-    - LeKiwi robot camera on SO100 wrist (with extended arm): 1.45 m
-    - iPhone (held at 1.5 m above the ground): ~3.1 m
+#### **Scaling and getting target object distance**
+A drawback of VGGT point clouds is that their depth is normalised. The coordinate system is defined in regards to the first camera frame, different from the real world metric depth. This impacts robotic manipulation applications where true depth is required. Therefore, we need to compute a scale factor then apply it to our point cloud inthe pipeline.
 
-    Why it matters: VGGT doesn't inherently know that the ground in the image is actually a certain distance away. To get accurate real-world measurements, we need to add this blind distance to the model’s output.
+To run scaling:
+```
+cd sonata
+uv run scaling.py
+```
+We obtain the scale factor by taking the minimum point of floor to camera segmented by Sonata, divided by a known distance called camera distance that depending on your camera needs to be modified. 
+
+**Parameter modification:**
+If you are using other machines/robots from lekiwi to take input pictures, you have to modify this parameter at:
+```
+cd sonata/inference_visualize-sonata.py
+```
+which is the Sonata inference file. You need to manually measure frame_dis:
+```
+frame_dis = 1.45 # no need to change if you are using lekiwi, using arm pose proposed by the pipeline
+```
+This is the distance from the camera to the point where the video frame first shows the ground. In other words, it’s how far away the ground appears in the video because the area immediately below the camera is “blind” to the view. For example:
+- LeKiwi robot camera on SO100 wrist (with extended arm): 1.45 m
+- iPhone (held at 1.5 m above the ground): ~3.1 m
+
+Why it matters: VGGT doesn't inherently know that the ground in the image is actually a certain distance away. To get accurate real-world measurements, we need to add this blind distance to the model’s output.
 
 
-2.  Modify the furniture you would like to track in the view of camera, and in the proposed categories of Sonata. 
-    ```
-    target = "chair"
-    ```
-    Categories proposed by Sonata are marked in ``` legend.html ```.
+#### **Get target object distance & coordinates**
+We obtain a 3D point cloud with denormalized scale -- same as real world distance. Now, we are able to select the coordinates of our target object.
 
-BEAWARE to run VGGT and Sonata inference again in the order above for the stored scale factor to apply to the point cloud. Now, you would be able to obtain the real calibrated distance of the target object. In other words run the two inference in the order: initial VGGT inference (to obtain unscaled point cloud) --> Sonata inference (compute scale factor) --> VGGT inference again (apply scale factor on point cloud) --> Sonata inference (for segmenting point cloud with real scale).
+Modify the furniture you would like to track in the view of camera, and in the proposed categories of Sonata. 
+```
+target = "chair"
+```
+Categories proposed by Sonata are marked in ``` legend.html ```.
+
+
+### Run automated script in one go:
+The above is a proposed way to run infereces, scaling and getting target separately. However, in order to first compare real world distance with VGGT prediction for scale factor, there is a specific order of executing the files. Therefore, we propose a script to run this in a clean and simple manner in bash:
+```
+# add script into your executable
+chmod +x bash-command.sh
+
+# run
+./bash-command.sh 
+```
+This runs inference with vggt & sonata, gets scale factor, runs VGGT inference again with scaling, then outputs the calibrated distance to target object.
 
 
 ### Le Kiwi navigation:
@@ -259,6 +277,15 @@ base_action, xy_speed, theta_speed, remaining_x_time, remaining_theta_time = rob
 ``` 
 takes in distance output from VGGT-Sonata, converts it into forward distance and the rotation needed, then execute with ```xy_speed``` -- forward speed, ```theta_speed``` -- rotation speed, as well as the required duration to complete the distances. Duration of each movement iteration is recorded and reduced from total duration, so when the required distance is completed le Kiwi would stop.
 
+#### Collect arm pose
+Le Kiwi is designed to hold a rigid arm when taking pictures, due how the wrist camera is attached, and calibration od each arm the proposed arm pose in our code is not always precise. Therefore, if you would like to recollect arm pose think about running:
+```
+cd lerobot
+conda activate lerobot
+
+python examples/lekiwi/collect_arm_pose.py
+```
+which stores new arm pose log in ```actions.txt```.
 
 ## Relocate camera position trajectory
 We also propose a functionality to view the camera trajectory with camera extrinsics. Extrinsics tell where the camera is (its position) and which way it’s facing (its orientation) relative to the world. Extrinsics store the camera location and the direction of camera that is pointing. When you have extrinsics for each frame, you can rebuild the camera’s path which is the trajectory.

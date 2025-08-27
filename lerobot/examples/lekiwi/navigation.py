@@ -14,21 +14,16 @@ FPS = 30
 
 # Create the robot and teleoperator configurations
 robot_config = LeKiwiClientConfig(remote_ip="172.18.134.136", id="my_lekiwi")
-teleop_arm_config = SO100LeaderConfig(port="/dev/ttyACM0", id="my_awesome_leader_arm")
 keyboard_config = KeyboardTeleopConfig(id="my_laptop_keyboard")
 
 robot = LeKiwiClient(robot_config)
-leader_arm = SO100Leader(teleop_arm_config)
 keyboard = KeyboardTeleop(keyboard_config)
 
 # To connect you already should have this script running on LeKiwi: `python -m lerobot.robots.lekiwi.lekiwi_host --robot.id=my_awesome_kiwi`
 robot.connect()
-leader_arm.connect()
 keyboard.connect()
 
 _init_rerun(session_name="lekiwi_teleop")
-
-freeze_pose = True
 
 remaining_x_time = 0.0
 remaining_theta_time = 0.0
@@ -58,10 +53,13 @@ while True:
     observation = robot.get_observation()
 
     # Freeze arm pose
-    arm_action = leader_arm.get_action()
-    arm_action = {f"arm_{k}": v for k, v in arm_action.items()}
-    if freeze_pose:
-        arm_action = {"arm_shoulder_pan.pos": -14.752906976744185, "arm_shoulder_lift.pos": -8.91774891774891, "arm_elbow_flex.pos": -68.37800999545661, "arm_wrist_flex.pos": 67.8048780487805, "arm_wrist_roll.pos": 6.764346764346769, "arm_gripper.pos": 98.95833333333334}
+    arm_action = {
+    "arm_shoulder_pan.pos": 23.299418604651152,
+    "arm_shoulder_lift.pos": -5.021645021645028,
+    "arm_elbow_flex.pos": -77.10131758291686,
+    "arm_wrist_flex.pos": 0.2439024390243958,
+    "arm_wrist_roll.pos": -30.793650793650798,
+    "arm_gripper.pos": 98.67424242424242,}
 
     # Save wrist camera image
     wrist_image = observation["wrist"]
