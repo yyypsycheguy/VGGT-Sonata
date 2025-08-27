@@ -3,21 +3,17 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 # Your tensor
-tensor = torch.tensor([[[-4.7204e-05],
-         [ 1.8018e-04],
-         [ 7.5226e-06]],
+tensor = torch.tensor([[[ 1.3079e-04],
+         [ 1.1569e-04],
+         [ 2.4851e-05]],
 
-        [[-2.1636e-02],
-         [-1.5943e+00],
-         [-3.1382e-02]],
+        [[ 3.0632e-01], # x right
+         [-4.9232e-01], # y towards
+         [-8.2294e-02]], # z up
 
-        [[ 2.1865e-01],
-         [-2.1143e+00],
-         [-5.0039e-02]],
-
-        [[ 2.8074e-01],
-         [-1.6457e+00],
-         [-4.5147e-02]]])
+        [[ 5.3716e-01],
+         [-4.8573e-01],
+         [-5.8770e-02]]])
 print(f'tensor shape: {tensor.shape}')
 # Reshape to (N, 3)
 points = tensor.squeeze(-1)

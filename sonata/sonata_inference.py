@@ -13,7 +13,9 @@
 # limitations under the License.
 
 import os
+
 import numpy as np
+from scipy.spatial import distance
 import open3d as o3d
 import torch
 import torch.nn as nn
@@ -22,7 +24,7 @@ import sonata
 
 with torch.no_grad():
     torch.cuda.empty_cache()
-    
+
 try:
     import flash_attn
 except ImportError:
@@ -206,17 +208,11 @@ if __name__ == "__main__":
         print(f"Predicted {len(np.unique(pred))} classes, {np.unique(pred)}")
         print(f"Predicted classes: {np.unique(name)}")
 
-    # Visualize
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(point.coord.cpu().detach().numpy())
-    pcd.colors = o3d.utility.Vector3dVector(color / 255)
-    o3d.visualization.draw_geometries([pcd])
-
     # Save results
+    point["color"] = torch.from_numpy(color).float()
     torch.save(point, "results.pt")
     print("Results saved to results.pt")
     print(point.keys())
-
 
     # ------------ get coords of selected classes ------------
     def get_coords_by_class(point, class_name):
@@ -232,23 +228,25 @@ if __name__ == "__main__":
         mask = np.array([name[i] == class_name for i in range(len(name))])
         return coords[mask]
 
-
     # get coords of target class
-    frame_dis = 1.45 # modify if needed
+    frame_dis = 1.45  # modify if needed
     target = "chair"
-    target_coords = get_coords_by_class(point, target) # modify to get coords of target class
-    print(f"\nMax {target} coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}")
+    target_coords = get_coords_by_class(
+        point, target
+    )  # modify to get coords of target class
+    print(
+        f"\nMax {target} coords: {max(target_coords[:, 2])}, min chair coords: {min(target_coords[:, 2])}"
+    )
     max_index = np.argmax(target_coords[:, 2])
     max_coord = target_coords[max_index]
     print(f"Original max {target} coord: {max_coord}")
     target_calibrated_dis = max_coord[2] + frame_dis
     print(f"Calibrated max {target} depth: {target_calibrated_dis}")
-    max_coord[2] = target_calibrated_dis
-    print(f"Calibrated {target} coord xyz coordinate: {max_coord}")
-    
+    max_coord[1] = target_calibrated_dis
+    xy_target = max_coord[:2]
+    print(f"Calibrated {target} coord xyz coordinate: {xy_target}")
+
     target_right_dis = max_coord[1]
-    #target_calibrated_dis max_coord[0]
-    
 
     # get overall min coord floor
     floor_coords = get_coords_by_class(point, "floor")
@@ -258,35 +256,44 @@ if __name__ == "__main__":
     print(f"Original min floor coord: {min_coord}")
     print(f"Calibrated min floor depth: {min_coord[2] + frame_dis}")
 
-
-    def scale_coord(frame_dis: float, min_depth= min_coord[2]) -> float:
-        sf = frame_dis / min_depth/ 1000
+    # Define scale factor function
+    def scale_coord(frame_dis: float, min_depth=min_coord[2]) -> float:
+        sf = frame_dis / min_depth / 1000
         return sf
     
+    # Calculate manhattan distance
+    # extrinsic = torch.load("t_extrinsic_scaled.pt")
+    # for img in extrinsic:
+    #     if xy_target[0] - img[0] < 0.1:
+    #         print(f"Found matching frame with x coord: {img[0]}, y coord: {img[1]}")
+    #         break
+    # manhattan_dist = distance.cityblock(xy_target, np.array([0, 0, 0]))
 
     path = os.path.join(os.path.dirname(__file__), "../vggt/share_var.py")
     os.path.abspath(path)
-    with open(os.path.abspath(path), 'r') as f:
-            content = f.read().strip()
+    with open(os.path.abspath(path), "r") as f:
+        content = f.read().strip()
 
-    scale_factor = float(content.split('=')[1].strip())
+    scale_factor = float(content.split("=")[1].strip())
     print("Old Scale factor:", scale_factor)
-    
 
     scale_factor = scale_coord(frame_dis=frame_dis)
-    print(f'Scaled by frame dis {frame_dis} m, Scale factor: {scale_factor}\n')
-
+    print(f"Scaled by frame dis {frame_dis} m, Scale factor: {scale_factor}\n")
 
     # Save updated scale factor to share_var.py
-    with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt/share_var.py")), 'w') as f:
-        f.write(f'scale_factor = {scale_factor}\n')
+    with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt/share_var.py")),"w",) as f:
+        f.write(f"scale_factor = {scale_factor}\n")
 
     # Write distance ouput to dis_output.py
-    output_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "dis_output.py"))
+    output_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "dis_output.py")
+    )
     print("Writing to:", output_path)
-    with open(output_path, 'w') as f:
-        f.write(f'dis_y = {target_calibrated_dis}\n')
-        f.write(f'dis_x = {target_right_dis}\n')
-    print(f"Updated distance: forward:{target_calibrated_dis}, and sideways: {target_right_dis} saved to dis_output.py \n")
+    with open(output_path, "w") as f:
+        f.write(f"dis_y = {target_calibrated_dis}\n")
+        f.write(f"dis_x = {target_right_dis}\n")
+    print(
+        f"Updated distance: forward:{target_calibrated_dis}, and sideways: {target_right_dis} saved to dis_output.py \n"
+    )
 
     torch.cuda.empty_cache()

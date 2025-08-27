@@ -29,9 +29,6 @@ keyboard.connect()
 _init_rerun(session_name="lekiwi_teleop")
 
 freeze_pose = True
-vggt_mode = True
-first_iteration = True
-
 
 remaining_x_time = 0.0
 remaining_theta_time = 0.0
@@ -74,34 +71,25 @@ while True:
     cv2.imwrite(wrist_image_path, wrist_image)
 
     # Save image for VGGT
-    if time.time() - current_time <= 5:
-        vggt_img_folder = "../../../vggt/images"
-        os.makedirs(vggt_img_folder, exist_ok=True)
-        vggt_image_path = os.path.join(vggt_img_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
-        cv2.imwrite(vggt_image_path, wrist_image)
+    vggt_img_folder = "../../../vggt/images"
+    os.makedirs(vggt_img_folder, exist_ok=True)
+    vggt_image_path = os.path.join(vggt_img_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
+    cv2.imwrite(vggt_image_path, wrist_image)
 
-    if vggt_mode:
-        if first_iteration:
-            keyboard_keys = keyboard.get_action()
+    keyboard_keys = keyboard.get_action()
 
-            base_action, xy_speed, theta_speed, remaining_x_time, remaining_theta_time = robot._from_keyboard_to_base_action_vggt(
-                pressed_keys=keyboard_keys,
-                dis_y=lekiwi_dis_y,
-                dis_x=lekiwi_dis_x
-            )
-            remaining_x_time+= 3
-            first_iteration = False
+    base_action, xy_speed, theta_speed, remaining_x_time, remaining_theta_time = robot._from_keyboard_to_base_action_vggt(
+        pressed_keys=keyboard_keys,
+        dis_y=lekiwi_dis_y,
+        dis_x=lekiwi_dis_x
+    )
 
-        # Keep moving until both times finish
-        if remaining_x_time > 0 or remaining_theta_time > 0:
-            base_action["x.vel"] = xy_speed if remaining_x_time > 0 else 0.0
-            base_action["theta.vel"] = theta_speed if remaining_theta_time > 0 else 0.0
-        else:
-            base_action = {"x.vel": 0.0, "y.vel": 0.0, "theta.vel": 0.0}
+    # Keep moving until both times finish
+    if remaining_x_time > 0 or remaining_theta_time > 0:
+        base_action["x.vel"] = xy_speed if remaining_x_time > 0 else 0.0
+        base_action["theta.vel"] = theta_speed if remaining_theta_time > 0 else 0.0
     else:
-        keyboard_keys = keyboard.get_action()
-        base_action = robot._from_keyboard_to_base_action(keyboard_keys)
-
+        base_action = {"x.vel": 0.0, "y.vel": 0.0, "theta.vel": 0.0}
 
     action = {**arm_action, **base_action}
     robot.send_action(action)
