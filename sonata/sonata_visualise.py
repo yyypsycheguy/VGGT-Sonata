@@ -22,6 +22,7 @@ with torch.no_grad():
 
 point = torch.load("results.pt")
 color = point.color.cpu().detach().numpy()
+print(point.keys())
 
 # Visualize
 pcd = o3d.geometry.PointCloud()
