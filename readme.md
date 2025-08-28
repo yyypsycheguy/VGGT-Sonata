@@ -20,8 +20,8 @@ The pipeline reconstructs indoor scene taken from lekiwi's camera with clear seg
 
 Navigation can be also be tracked by plotting the camera extrinsic parameters to visualise the camera translation. We will explain how to enable this functionality in Annex that follows. A demo video redording how lekiwi travels to the target. 
 
-<div style="text-align:center;">
-  <img src="readme-imgs/output.gif" width="400" height="500">
+<div align="center">
+  <img src="readme-imgs/output.gif" width="300" height="500">
 </div>
 
 
