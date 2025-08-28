@@ -12,15 +12,13 @@ cd ../sonata
 source sonata-venv/bin/activate
 export PYTHONPATH=./
 MAX_JOB=4 uv run sonata_inference.py
-uv run scaling.py
+uv run compute_scale_factor.py
 deactivate
-
-counter=$((counter + 1))
 
 # run another loop
 cd ../vggt
 source .venv/bin/activate
-CUDA_LAUNCH_BLOCKING=1 MAX_JOB=3 uv run vggt_inference.py
+uv run scale_pointcloud.py
 deactivate
 
 cd ../sonata
@@ -30,6 +28,5 @@ CUDA_LAUNCH_BLOCKING=1 MAX_JOB=3 uv run sonata_inference.py
 uv run get_target_distance.py
 deactivate
 
-
-echo "scale_factor=1.0" > ../vggt/share_var.py
+echo "scale_factor=1.0" > share_var.py
 echo "scale_factor reset to 1.0 "

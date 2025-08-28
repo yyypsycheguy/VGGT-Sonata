@@ -8,7 +8,11 @@ import torch.nn as nn
 
 import sonata
 
-print("################################# Scaling ##################################\n")
+'''This script computes the scale factor based on the predicted point cloud and semantic segmentation results from sonata_inference.py.'''
+
+
+print("\n################################# Computing Scale Factor ##################################\n")
+
 
 # ------------ get coords of selected classes ------------
 def get_coords_by_class(point, class_name, name):
@@ -49,8 +53,8 @@ if __name__ == "__main__":
     print(f"Original min floor coord: {min_coord}")
     print(f"Calibrated min floor depth: {min_coord[2] + frame_dis}")
 
-
-    path = os.path.join(os.path.dirname(__file__), "../vggt/share_var.py")
+    # Get scale factor
+    path = os.path.join(os.path.dirname(__file__), "share_var.py")
     os.path.abspath(path)
     with open(os.path.abspath(path), "r") as f:
         content = f.read().strip()
@@ -62,7 +66,7 @@ if __name__ == "__main__":
     print(f"Scaled by frame dis {frame_dis} m, Scale factor: {scale_factor}\n")
 
     # Save updated scale factor to share_var.py
-    with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "../vggt/share_var.py")),"w",) as f:
+    with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "share_var.py")),"w",) as f:
         f.write(f"scale_factor = {scale_factor}\n")
 
     torch.cuda.empty_cache()

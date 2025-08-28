@@ -9,11 +9,13 @@ from vggt.models.vggt import VGGT
 from vggt.utils.geometry import (
     closed_form_inverse_se3,
     depth_to_world_coords_points,
+    unproject_depth_map_to_point_map
 )
 from vggt.utils.load_fn import load_and_preprocess_images
 from vggt.utils.pose_enc import pose_encoding_to_extri_intri
 
-print("################################# VGGT Inference ##################################\n")
+
+print("\n################################# VGGT Inference ##################################\n")
 
 
 
@@ -80,60 +82,13 @@ with torch.no_grad():
     # Predict Depth Maps
     depth_map, depth_conf = model.depth_head(aggregated_tokens_list, images, ps_idx)
 
+    # point cloud
+    point_map_by_unprojection = unproject_depth_map_to_point_map(depth_map.squeeze(0), 
+                                                        extrinsic.squeeze(0), 
+                                                        intrinsic.squeeze(0))
+
     # remove batch dimension
-    depth_map = depth_map[0]  # [S, H, W, 1]
     extrinsic = extrinsic[0]  # [S, 3, 4]
-    intrinsic = intrinsic[0]  # [S, 3, 3]
-    extrinsic_homo = extrinsic_homo[0]  # extrinsic but shape [S,4,4]
-    t_extrinsic = extrinsic[:, :3, 3]  # [B, S, 3]
-
-
-
-def unproject_depth_map_to_point_map_index(
-    depth_map: np.ndarray,  # shape: [S, H, W, 1]
-    extrinsics_cam: np.ndarray,  # shape: [S, 3, 4]
-    intrinsics_cam: np.ndarray,  # shape: [S, 3, 3]
-    extrinsics_homo: np.ndarray,  # shape: [S, 4, 4]
-    scale_factor: float,
-) -> np.ndarray:
-    '''Inference for 3D point cloud '''
-
-    if isinstance(depth_map, torch.Tensor):
-        depth_map = depth_map.cpu().numpy()
-        depth_map = depth_map * scale_factor
-    if isinstance(extrinsics_cam, torch.Tensor):
-        extrinsics_cam = extrinsics_cam.cpu().numpy()
-        extrinsics_cam = torch.tensor(extrinsics_cam, dtype=torch.float32)
-    if isinstance(intrinsics_cam, torch.Tensor):
-        intrinsics_cam = intrinsics_cam.cpu().numpy()
-    if isinstance(extrinsics_homo, torch.Tensor):
-        extrinsics_homo = extrinsics_homo.cpu().numpy()
-
-    world_points_list = []
-    ref_inv = np.linalg.inv(extrinsics_homo[0])
-
-    # convert extrinsic to cam to world
-    cam_to_world_extrinsic = closed_form_inverse_se3(extrinsics_cam)
-
-    R_cam_to_world = cam_to_world_extrinsic[:, :3, :3]
-    t_cam_to_world = cam_to_world_extrinsic[:, :3, 3]
-    t_cam_to_world = t_cam_to_world[:, :, None]
-    t_scaled = t_cam_to_world.clone()
-    t_scaled[:, : , 0] *= scale_factor  # scale forward/back translation only
-
-    extrinsic_scaled = closed_form_inverse_se3(np.concatenate([R_cam_to_world, t_scaled], axis=2))
-
-    for frame_idx in range(depth_map.shape[0]):
-        cam_points, _, _ = depth_to_world_coords_points(
-            depth_map[frame_idx].squeeze(-1),
-            extrinsic_scaled[frame_idx],
-            intrinsics_cam[0],
-        )  # [H, W, 3]
-
-        world_points_list.append(cam_points)
-
-    world_points_array = np.stack(world_points_list, axis=0)  # [S, H, W, 3]
-    return world_points_array, t_scaled
 
 
 
@@ -195,35 +150,11 @@ def convert_vggt_to_sonata(
     return sonata_dict
 
 
-# Take scale factor
-path = os.path.abspath(os.path.join(os.path.dirname(__file__), "share_var.py"))
-with open(path, "r") as f:
-    for line in f.readlines():
-        if "scale_factor" in line:
-            sf = float(line.split("=")[1].strip())
-print(f'Previous scale factor: {sf}\n')
+# Call function convert VGGT point map to SONATA format
+Sonata_format = convert_vggt_to_sonata(point_map_by_unprojection, images=images)
 
-
-# Call function to get point cloud
-point_map_by_unprojection, t_extrinsic_scaled = unproject_depth_map_to_point_map_index(
-    depth_map,
-    extrinsic,
-    intrinsic,
-    extrinsic_homo,  # [S,4,4]
-    scale_factor=sf,
-)
-
-
-torch.save(t_extrinsic_scaled, "t_extrinsic_scaled.pt")
-print(f"t cam-to-world scaled extrinsics: {t_extrinsic_scaled}\n")  # uncomment if like to visualise
-print(f"Translation part of extrinsic saved to: t_extrinsic_scaled.pt\n")
-
-
-# Output
-print(f"Using scale factor: {sf}")
-sonata_data = convert_vggt_to_sonata(point_map_by_unprojection, images=images)
-
-torch.save(sonata_data, "t_extrinsic_scaled.pt")
-print(sonata_data.keys())
-torch.save(sonata_data, "predictions.pt")
+torch.save(Sonata_format, "predictions.pt")
 print("\nSonata formatted predictions saved to predictions.pt \n")
+
+torch.save(extrinsic, "extrinsic.pt")
+print(f"Extrinsics saved to extrinsic.pt\n")

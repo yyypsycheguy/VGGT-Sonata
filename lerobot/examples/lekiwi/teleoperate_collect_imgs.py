@@ -38,7 +38,7 @@ while True:
     # Save wrist camera image: uncomment for saving wrist camera images
     wrist_image = observation["wrist"]
     wrist_image = cv2.cvtColor(wrist_image, cv2.COLOR_RGB2BGR)
-    folder = "wrist_images"
+    folder = "../vggt/images"
     os.makedirs(folder, exist_ok=True)
     wrist_image_path = os.path.join(folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
     cv2.imwrite(wrist_image_path, wrist_image)
@@ -74,11 +74,4 @@ while True:
     robot.send_action(action)
 
     interval = time.perf_counter() - t0
-    busy_wait(max(20 / FPS - interval, 0.0))  # modify this for rate of image taking
-
-    # write image to vggt img folder
-    vggt_img_folder = "../vggt/images"
-    os.makedirs(vggt_img_folder, exist_ok=True)
-    vggt_image_path = os.path.join(vggt_img_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
-    cv2.imwrite(vggt_image_path, wrist_image)
-    print(f"Saved image to {vggt_image_path}")
+    busy_wait(max(1.0/ FPS - interval, 0.0))  # modify this for rate of image taking

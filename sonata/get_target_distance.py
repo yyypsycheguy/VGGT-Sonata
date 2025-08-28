@@ -1,6 +1,6 @@
 import os
 
-from scaling import get_coords_by_class
+from compute_scale_factor import get_coords_by_class
 
 import numpy as np
 from scipy.spatial import distance
