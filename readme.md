@@ -13,69 +13,9 @@ The pipeline reconstructs indoor scene taken from lekiwi's camera with clear seg
 <tr>
   <td><img src="readme-imgs/vggt_big_scene.png"width="600" height="400"></td>
   <td><img src="readme-imgs/scaled_big_scene.png" width="600" height="400" /></td>
+  <td><img src="readme-imgs/legend.png" width="300" height="350" /></td>
 </tr>
 </table>
-
-<div style="text-align: center;">
-
-<table border="1" cellpadding="12" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif; margin: 0 auto; table-layout: fixed; width: 600px;">
-  <thead style="background-color:rgb(0, 0, 0); color:white;">
-    <tr>
-      <th style="min-width: 120px;">Class ID</th>
-      <th style="min-width: 180px;">Label</th>
-      <th style="min-width: 120px;">Color</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>0, 1</td>
-      <td>wall</td>
-      <td><span style="display:inline-block; width: 50px; height: 20px; background-color: rgb(174,199,232);"></span></td>
-    </tr>
-    <tr>
-      <td>1, 2</td>
-      <td>floor</td>
-      <td><span style="display:inline-block; width: 50px; height: 20px; background-color: rgb(152,223,138);"></span></td>
-    </tr>
-    <tr>
-      <td>2, 3</td>
-      <td>cabinet</td>
-      <td><span style="display:inline-block; width: 50px; height: 20px; background-color: rgb(31,119,180);"></span></td>
-    </tr>
-    <tr>
-      <td>4, 5</td>
-      <td>chair</td>
-      <td><span style="display:inline-block; width: 50px; height: 20px; background-color: rgb(188,189,34);"></span></td>
-    </tr>
-    <tr>
-      <td>6, 7</td>
-      <td>table</td>
-      <td><span style="display:inline-block; width: 50px; height: 20px; background-color: rgb(255,152,150);"></span></td>
-    </tr>
-    <tr>
-      <td>7, 8</td>
-      <td>door</td>
-      <td><span style="display:inline-block; width: 50px; height: 20px; background-color: rgb(214,39,40);"></span></td>
-    </tr>
-    <tr>
-      <td>12, 14</td>
-      <td>desk</td>
-      <td><span style="display:inline-block; width: 50px; height: 20px; background-color: rgb(247,182,210);"></span></td>
-    </tr>
-    <tr>
-      <td>14, 24</td>
-      <td>refrigerator</td>
-      <td><span style="display:inline-block; width: 50px; height: 20px; background-color: rgb(255,127,14);"></span></td>
-    </tr>
-    <tr>
-      <td>19, 39</td>
-      <td>otherfurniture</td>
-      <td><span style="display:inline-block; width: 50px; height: 20px; background-color: rgb(82,84,163);"></span></td>
-    </tr>
-  </tbody>
-</table>
-
-</div>
 
 
 Navigation can be also be tracked by plotting the camera extrinsic parameters to visualise the camera translation. We will explain how to enable this functionality in Annex that follows. A demo video redording how lekiwi travels to the target. 
