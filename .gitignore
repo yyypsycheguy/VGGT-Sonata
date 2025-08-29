@@ -177,6 +177,8 @@ vggt/plot-test.py
 vggt/plot-test.py
 vggt/plot-track.py
 
+vggt/plot_after.py
+
 # ----------------------- ignore files from lerobot -------------------------
 ### Environments & Dependencies ###
 lerobot/.env

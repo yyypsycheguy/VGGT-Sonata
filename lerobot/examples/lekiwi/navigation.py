@@ -26,40 +26,52 @@ keyboard.connect()
 _init_rerun(session_name="lekiwi_teleop")
 
 remaining_x_time = 0.0
+remaining_y_time = 0.0
 remaining_theta_time = 0.0
+
+initialise = True
 
 # Get vggt distance
 values = []
 with open(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../sonata/dis_output.py")), 'r') as f:
     for line in f:
         line = line.strip()
-        if line and '=' in line:  # skip empty lines
+        if line and '=' in line:
             values.append(float(line.split('=')[1].strip()))
 
-lekiwi_dis_x, lekiwi_dis_y = values
-print(lekiwi_dis_y, lekiwi_dis_x)
+distance_x, distance_y = values
+distance_y = -distance_y
+print(f"distance x: {distance_x}, distance y: {distance_y}")
 
+# distance_x = 1
+# distance_y = -1
 
 prev_time = time.perf_counter()
 while True:
     # Measure full cycle interval
     current_time = time.perf_counter()
     interval = current_time - prev_time
-    prev_time = current_time 
+    prev_time = current_time
 
-    remaining_x_time = max(0.0, remaining_x_time - interval)
-    remaining_theta_time = max(0.0, remaining_theta_time - interval)
+    # Sequential timers
+    if remaining_x_time > 0:
+        remaining_x_time = max(0.0, remaining_x_time - interval)
+    elif remaining_theta_time > 0:
+        remaining_theta_time = max(0.0, remaining_theta_time - interval)
+    elif remaining_y_time > 0:
+        remaining_y_time = max(0.0, remaining_y_time - interval)
 
     observation = robot.get_observation()
 
     # Freeze arm pose
     arm_action = {
-    "arm_shoulder_pan.pos": 23.299418604651152,
-    "arm_shoulder_lift.pos": -5.021645021645028,
-    "arm_elbow_flex.pos": -77.10131758291686,
-    "arm_wrist_flex.pos": 0.2439024390243958,
-    "arm_wrist_roll.pos": -30.793650793650798,
-    "arm_gripper.pos": 98.67424242424242,}
+        "arm_shoulder_pan.pos": 23.299418604651152,
+        "arm_shoulder_lift.pos": -5.021645021645028,
+        "arm_elbow_flex.pos": -77.10131758291686,
+        "arm_wrist_flex.pos": 0.2439024390243958,
+        "arm_wrist_roll.pos": -30.793650793650798,
+        "arm_gripper.pos": 98.67424242424242,
+    }
 
     # Save wrist camera image
     wrist_image = observation["wrist"]
@@ -74,27 +86,40 @@ while True:
     vggt_image_path = os.path.join(vggt_img_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
     cv2.imwrite(vggt_image_path, wrist_image)
 
-    keyboard_keys = keyboard.get_action()
+    if initialise:
+        keyboard_keys = keyboard.get_action()
+        base_action, xy_speed, theta_speed, x_duration, y_duration, theta_duration = robot._from_keyboard_to_base_action_vggt(
+            pressed_keys=keyboard_keys,
+            dis_y=distance_y,
+            dis_x=distance_x
+        )
 
-    base_action, xy_speed, theta_speed, remaining_x_time, remaining_theta_time = robot._from_keyboard_to_base_action_vggt(
-        pressed_keys=keyboard_keys,
-        dis_y=lekiwi_dis_y,
-        dis_x=lekiwi_dis_x
-    )
+        remaining_x_time = x_duration
+        remaining_theta_time = theta_duration
+        remaining_y_time = y_duration
 
-    # Keep moving until both times finish
-    if remaining_x_time > 0 or remaining_theta_time > 0:
-        base_action["x.vel"] = xy_speed if remaining_x_time > 0 else 0.0
-        base_action["theta.vel"] = theta_speed if remaining_theta_time > 0 else 0.0
+        initialise = False
+
+    # Sequential motion: X -> theta -> Y
+    if remaining_x_time > 0:
+        # Move forward along X
+        base_action = {"x.vel": xy_speed, "y.vel": 0.0, "theta.vel": 0.0}
+    elif remaining_theta_time > 0:
+        # Rotate
+        target_angle = 90 if distance_y > 0 else -90 if distance_y < 0 else 0
+        base_action = {"x.vel": 0.0, "y.vel": 0.0, "theta.vel": theta_speed if target_angle > 0 else -theta_speed}
+    elif remaining_y_time > 0:
+        # Move along new heading (X axis after rotation)
+        base_action = {"x.vel": xy_speed, "y.vel": 0.0, "theta.vel": 0.0}
     else:
         base_action = {"x.vel": 0.0, "y.vel": 0.0, "theta.vel": 0.0}
 
     action = {**arm_action, **base_action}
     robot.send_action(action)
-    print(f"Remaining X: {remaining_x_time:.2f}s, Remaining Theta: {remaining_theta_time:.2f}s")
+    print(f"Remaining X: {remaining_x_time:.2f}s, Theta: {remaining_theta_time:.2f}s, Y: {remaining_y_time:.2f}s\n")
 
     busy_wait(1.0 / FPS)
 
-    if remaining_x_time == 0.0 and remaining_theta_time == 0.0:
+    if remaining_x_time == 0.0 and remaining_theta_time == 0.0 and remaining_y_time == 0.0:
         print("Motion complete. Robot stopped.")
         break

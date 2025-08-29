@@ -2,19 +2,24 @@ import os
 
 import numpy as np
 import torch
-
 from vggt.utils.geometry import closed_form_inverse_se3
 
-''''This script scales the point cloud and extrinsics by the computed scale factor from sonata/scaling.py'''
+''' This script scales extrinsics by the computed scale factor'''
 
-print("\n############################## Apply Scale Factor to point cloud & extrinsic ######################################")
-
+print("\n############################## Scale Extrinsic ######################################")
 
 def extrinsic_scaling(
     extrinsics_cam: np.ndarray,  # shape: [S, 3, 4]
     scale_factor: float,
 ) -> np.ndarray:
-    '''Scale extrinsics. Would be original extrinsic if scale factor = 1.0'''
+    
+    '''Scale extrinsics. Would be original extrinsic if scale factor = 1.0
+    
+    args:
+        extrinsics_cam: complete extrinsic from camera to world, shape [S, 3, 4]
+        scale_factor: scale factor to scale extrinsics
+    return:
+        scaled translation vector from extrinsic, shape [S, 3, 1]'''
 
     if isinstance(extrinsics_cam, torch.Tensor):
         extrinsics_cam = extrinsics_cam.cpu().numpy()
@@ -26,21 +31,13 @@ def extrinsic_scaling(
     t_cam_to_world = cam_to_world_extrinsic[:, :3, 3]
     t_cam_to_world = t_cam_to_world[:, :, None]
     t_scaled = t_cam_to_world.clone()
-    t_scaled[:, : , 0] *= scale_factor  # scale forward/back translation only
+    t_scaled[:, : , 0] *= scale_factor
 
     return t_scaled
 
 
-def scale_pointcloud(point, scale_factor):
-    '''Scale point cloud by scale factor'''
-    point["coord"] = point["coord"] * scale_factor
-
-    return point
-
-
-
 if __name__ == "__main__":
-    
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Take scale factor
@@ -51,15 +48,20 @@ if __name__ == "__main__":
                 sf = float(line.split("=")[1].strip())
     print(f'Previous scale factor: {sf}\n')
 
-    # Scale point cloud
-    point = torch.load("../vggt/predictions.pt")
-    scaled_pred = scale_pointcloud(point, sf)
-    torch.save(scaled_pred, "predictions.pt")
-    print(f"Scaled point cloud by factor {sf}, saved to predictions.pt")
-
     # Scale extrinsics
     extrinsics = torch.load("../vggt/extrinsic.pt")
     scaled_extrinsics = extrinsic_scaling(extrinsics, sf)
+    scaled_extrinsics = torch.tensor(scaled_extrinsics, dtype=torch.float32)
     print(f"Extrinsics: {scaled_extrinsics}")
-    torch.save(scaled_extrinsics, "extrinsic.pt")
-    print(f"Scaled extrinsics by factor {sf}, saved to extrinsic.pt\n")
+
+    torch.save(scaled_extrinsics, "extrinsic_scaled.pt")
+    print(f"Scaled extrinsics by factor {sf}, saved to extrinsic_scaled.pt\n")
+
+    # concatenate with rotation matrix
+    extrinsics_rot = extrinsics[:, :3, :3]
+    extrinsics_rot = extrinsics_rot.to(scaled_extrinsics.device)
+    extrinsics_scaled = torch.cat((extrinsics_rot, scaled_extrinsics), dim=2)
+    print(f"Complete scaled extrinsics: {extrinsics_scaled}")
+
+    torch.save(extrinsics_scaled, "extrinsic_scaled_complete.pt")
+    print(f"Complete scaled translation with rotation matrix, saved to extrinsic_scaled_complete.pt\n")

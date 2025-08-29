@@ -63,7 +63,6 @@ with torch.no_grad():
     B, V = extrinsic.shape[:2]  # [1, 6, 3, 4]
     extrinsic_homo = torch.eye(4, device=device).repeat(B, V, 1, 1)  # [1, 6, 4, 4]
     extrinsic_homo[:, :, :3, :] = extrinsic
-    transformation = torch.eye(4, device=device)
     transformation = torch.tensor(
         [
             [1, 0, 0, 0],  # x right -> x right
@@ -157,4 +156,5 @@ torch.save(Sonata_format, "predictions.pt")
 print("\nSonata formatted predictions saved to predictions.pt \n")
 
 torch.save(extrinsic, "extrinsic.pt")
+print(f"Extrinsics: {extrinsic}")
 print(f"Extrinsics saved to extrinsic.pt\n")

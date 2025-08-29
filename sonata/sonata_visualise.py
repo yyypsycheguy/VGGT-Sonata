@@ -20,15 +20,15 @@ import torch
 with torch.no_grad():
     torch.cuda.empty_cache()
 
-point = torch.load("results.pt")
+point = torch.load("scaled_sonata_points.pt")
 color = point.color.cpu().detach().numpy()
 print(point.keys())
 
 # Visualize
 pcd = o3d.geometry.PointCloud()
-points = point.coord.cpu().detach().numpy()
+points = torch.tensor(point.coord).cpu().detach().numpy()
 # Inverse y axis
-points[:, 1] = -points[:, 1]
+# points[:, 1] = -points[:, 1]
 pcd.points = o3d.utility.Vector3dVector(points)
 
 pcd.colors = o3d.utility.Vector3dVector(color / 255)
