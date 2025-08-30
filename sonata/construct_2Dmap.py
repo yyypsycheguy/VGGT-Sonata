@@ -1,10 +1,5 @@
-import os
-
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
-from compute_scale_factor import get_coords_by_class
-from PIL import Image, ImageDraw
 
 """Construct a 2D map with white background, green floor points, and red extrinsic points with labels"""
 

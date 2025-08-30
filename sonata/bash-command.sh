@@ -30,6 +30,3 @@ uv run scale_pointcloud.py
 uv run get_target_distance.py
 # 7. construct 2D map
 uv run construct_2Dmap.py
-
-# echo "scale_factor=1.0" > share_var.py
-# echo "scale_factor reset to 1.0 "

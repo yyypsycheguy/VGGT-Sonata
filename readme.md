@@ -16,15 +16,13 @@ The pipeline reconstructs indoor scene taken from lekiwi's camera with clear seg
 <tr>
   <td><img src="readme-imgs/vggt_big_scene.png"width="600" height="400"></td>
   <td><img src="readme-imgs/scaled_big_scene.png" width="600" height="400" /></td>
-  <td><img src="readme-imgs/legend.png" width="300" height="350" /></td>
 </tr>
 </table>
 
-Navigation can be also be tracked by plotting the camera extrinsic parameters to visualise the camera translation. We will explain how to enable this functionality in Annex that follows. A demo video redording how lekiwi travels to the target.
-
-<div align="center">
-  <img src="readme-imgs/output.gif" width="300" height="500">
-</div>
+<table>
+  <td><img src="readme-imgs/output.gif" width="300" height="400"></td>
+  <td><img src="readme-imgs/legend.png" width="300" height="350" /></td>
+</table>
 
 ## Installation
 
@@ -37,7 +35,7 @@ cd VGGT-Sonata
 
 ### Setup for [VGGT](https://github.com/facebookresearch/vggt.git) -- Visual Geometry Grounded Transformer
 
-Before running the pipeline, remember to set up dependencies for VGGT and Sonata, as well as lerobot. For now, we are just setting up virtual environments and installing packages.The repository is separated into three parts: VGGT, Sonata and lerobot, respectively have their own environments and dependencies. More detailed installation guide for trouble shooting can be found in their original repositories, but it is enough by following the commands down below for running the pipeline.
+Before running the pipeline, remember to set up dependencies for VGGT and Sonata, as well as lerobot. For now, we are just setting up virtual environments and installing packages. The repository is separated into three parts: VGGT, Sonata and lerobot, respectively have their own environments and dependencies. More detailed installation guide for trouble shooting can be found in their original repositories, but it is enough by following the commands down below for running the pipeline.
 
 ```bash
 cd vggt
@@ -127,11 +125,11 @@ Now you have lerobot setup on your local machine, you have to do the same of the
 
 ## Workflow walk through
 
-There are four main files need to be executed in order respectively for lekiwi image collecting teleoperation, VGGT inference, Sonata inference and lekiwi navigation. Let's dive into each one, walk through how to execute them, and make sure some parameters are correct according to your own hardware.
+There are four main files that need to be executed in order respectively, clearly marked by each sections. Let's dive into each one, walk through how to execute them, and make sure some parameters are correct according to your own hardware.
 
 ### 1. Collect images by teleoperating Le Kiwi:
 
-First step is to collect images with the camera on le kiwi wrist to even have images stored in the image folder for VGGT inference. Le Kiwi is designed to run by being teleoperated, which means it needs to be connected vis SSH as well as by running the teleoperate file locally. Therefore, we need to collect images by teleoperating le Kiwi. Feel free to move it around, make sure you take pictures enough for inference.
+First step is to collect images with le kiwi wrist camera, to store images for VGGT inference. Le Kiwi is designed to run by being teleoperated, which means it needs to be connected vis SSH as well as by running the teleoperate file locally. Therefore, we need to collect images by teleoperating it. Feel free to move it around, make sure you take pictures enough for inference.
 
 Get into the directory containing the teleoperation file `lerobot/examples/lekiwi/teleoperate_collect_imgs.py`:
 
@@ -146,8 +144,8 @@ Make sure you have set the correct remote_ip that belongs to your Raspberry Pi, 
 robot_config = LeKiwiClientConfig(remote_ip="172.18.134.136", id="my_lekiwi")
 ```
 
-If you have questions on how to get the ip address and SSH into the Pi: connect it using HDMI for the first time:
-Get Wired IP (First Connection via HDMI Cable)
+If you have questions on how to get the ip address and SSH into the Pi: connect it using ethernet cable for the first time:
+Get Wired IP (First Connection via ethernet)
 
 ```bash
 ip addr
@@ -161,7 +159,7 @@ arp -a
 nmap -sn 192.168.1.0/24
 ```
 
-Inside the Pi: Check Its Current IPs:
+Inside the Pi: check its current ip:
 
 ```bash
 hostname -I
@@ -237,8 +235,9 @@ You can modify the rate of image taking in the file:
 busy_wait(max( 1.0/ FPS - interval, 0.0))  # modify FPS value, eg. FPS=1 takes 1 picture per second
 ```
 
-The images taken are stored in `vggt/images` directory. Beware to make sure the floor is in view of all images. For a 4090 GPU the maximum number of images that can run for inference is around 5-6 before encountering CUDA out of memory. Usually 3 images with enough view is enough to cover modelling of a corner of hallway.
+The images taken are stored in `vggt/images` directory. Beware to make sure the floor is in view of all images. For a 4090 GPU the maximum number of images that can run for inference is around 5-6 before encountering CUDA out of memory, depending on the resolution. For reference, 3 images with overlapping objects in each, is enough to cover modelling of a corner of hallway.
 
+<div align="center">
 <table>
 <tr>
   <td><img src="readme-imgs/2025_08_25_17:38:36.jpg"width="200" height="300"></td>
@@ -246,6 +245,7 @@ The images taken are stored in `vggt/images` directory. Beware to make sure the 
   <td><img src="readme-imgs/2025_08_25_17:42:50.jpg" width="200" height="300" /></td>
 </tr>
 </table>
+</div>
 
 ### 2. Running VGGT inference:
 
@@ -261,41 +261,16 @@ which takes images in `vggt/images` to run inference, then stores the predicted 
 
 Camera extrinsics is also saved as tensor in ``extrinsics.pt` for later use. Extrinsics store the camera location and the direction of camera that is pointing, which is useful to track camera positions when each images are taken.
 
+<div align="center">
+  <text>Point cloud visualisation by VGGT :<text>
+</div>
+<div align="center">
+  <img src="readme-imgs/vggt_big_scene.png"width="400" height="300">
+</div>
+
 ### Running Sonata inference:
 
-Sonata inference is responsible of sementic segementation of different objects in the scene. Recall in the demo sample point clouds that represents chair is colored in green etc. The model is trained in indoor furniture dataset with categories found in `legend.html`.
-
-<table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif;">
-  <thead style="background-color:rgb(0, 0, 0);">
-    <tr>
-      <th>Class ID</th>
-      <th>Label</th>
-      <th>Color</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>0, 1</td><td>wall</td><td style="background-color: rgb(174,199,232);"></td></tr>
-    <tr><td>1, 2</td><td>floor</td><td style="background-color: rgb(152,223,138);"></td></tr>
-    <tr><td>2, 3</td><td>cabinet</td><td style="background-color: rgb(31,119,180);"></td></tr>
-    <tr><td>3, 4</td><td>bed</td><td style="background-color: rgb(255,187,120);"></td></tr>
-    <tr><td>4, 5</td><td>chair</td><td style="background-color: rgb(188,189,34);"></td></tr>
-    <tr><td>5, 6</td><td>sofa</td><td style="background-color: rgb(140,86,75);"></td></tr>
-    <tr><td>6, 7</td><td>table</td><td style="background-color: rgb(255,152,150);"></td></tr>
-    <tr><td>7, 8</td><td>door</td><td style="background-color: rgb(214,39,40);"></td></tr>
-    <tr><td>8, 9</td><td>window</td><td style="background-color: rgb(197,176,213);"></td></tr>
-    <tr><td>9 ,10</td><td>bookshelf</td><td style="background-color: rgb(148,103,189);"></td></tr>
-    <tr><td>10, 11</td><td>picture</td><td style="background-color: rgb(196,156,148);"></td></tr>
-    <tr><td>11, 12</td><td>counter</td><td style="background-color: rgb(23,190,207);"></td></tr>
-    <tr><td>12, 14</td><td>desk</td><td style="background-color: rgb(247,182,210);"></td></tr>
-    <tr><td>13, 16</td><td>curtain</td><td style="background-color: rgb(219,219,141);"></td></tr>
-    <tr><td>14, 24</td><td>refrigerator</td><td style="background-color: rgb(255,127,14);"></td></tr>
-    <tr><td>15, 28</td><td>shower curtain</td><td style="background-color: rgb(158,218,229);"></td></tr>
-    <tr><td>16, 33</td><td>toilet</td><td style="background-color: rgb(44,160,44);"></td></tr>
-    <tr><td>17, 34</td><td>sink</td><td style="background-color: rgb(112,128,144);"></td></tr>
-    <tr><td>18, 36</td><td>bathtub</td><td style="background-color: rgb(227,119,194);"></td></tr>
-    <tr><td>19, 39</td><td>otherfurniture</td><td style="background-color: rgb(82,84,163);"></td></tr>
-  </tbody>
-</table>
+Sonata inference is responsible of sementic segementation of different objects in the scene. Recall in the demo sample point clouds representing floor is colored in green, wall is blue etc. The model is trained in indoor furniture dataset.
 
 ```bash
 cd Sonata
@@ -303,7 +278,7 @@ source sonata-venv/bin/activate
 uv run sonata_inference.py
 ```
 
-Enables 3d point cloud segmentation by taking input from `predictions.pt`. You shall see the predicted categories in terminal output after running inference. The predictions is save in dictionary format in `results.pt`.
+Enables 3d point cloud segmentation by taking input from `predictions.pt`. You shall see the predicted categories in terminal output after running inference. The predictions is saved in dictionary format in `sonata_points.pt`.
 
 To visualise the segmentation, run:
 
@@ -315,7 +290,7 @@ uv run sonata_visualise.py
 
 These two are executed by separate files loading the same point cloud tensor.
 
-### 3. Comppute scale factor
+### 3. Compute scale factor
 
 A drawback of VGGT point clouds is that their depth is normalised. The coordinate system is defined in regards to the first camera frame, different from the real world metric depth. This impacts robotic manipulation applications where true depth is required. Therefore, we need to compute a scale factor then apply it to our point cloud inthe pipeline.
 
@@ -327,7 +302,7 @@ source sonata-venv/bin/activate
 uv run compte_scale_factor.py
 ```
 
-We obtain the scale factor by taking the minimum point of floor to camera saved in `results.pt`, divided by a known distance called camera distance that depending on your camera needs to be modified.
+We obtain the scale factor by taking the minimum point of floor along the y-axis (pointing towards us) to camera saved in `results.pt`, divided by a known distance called camera distance that depending on your camera needs to be modified. The computed scale factor is stored in ```sonata/share_var.py```.
 
 **Parameter modification:**
 If you are using other machines/robots from lekiwi to take input pictures, you have to modify this parameter at `sonata/inference_visualize-sonata.py` which is the Sonata inference file. You need to manually measure frame_distance:
@@ -341,25 +316,46 @@ This is the distance from the camera to the point where the video frame first sh
 - LeKiwi robot camera on SO100 wrist (with extended arm): 1.45 m
 - iPhone (held at 1.5 m above the ground): ~3.1 m
 
+You should measure the distance from where you are holding the camera to this part of the ground just visible in the picture.
+
+<div align="center">
+  <img src="readme-imgs/frame_distance.png"width="300" height="400">
+</div>
+
 Why it matters: VGGT doesn't inherently know that the ground in the image is actually a certain distance away. To get accurate real-world measurements, we need to add this blind distance to the model’s output.
 
-### 4. Scaling point cloud
 
+### 4. Scale Extrinsic to Relocate camera position trajectory
+We also propose a functionality to view the camera trajectory with camera extrinsics. Extrinsics tell where the camera is (its position) and which way it’s facing (its orientation) relative to the world. Extrinsics store the camera location and the direction of camera that is pointing. When you have extrinsics for each frame, you can rebuild the camera’s path which is the trajectory.
+
+It refers to robot translation in the pipeline. Run it with:
+
+```bash
+cd vggt
+source .venv/bin/activate
+uv run scale_extrinsic.py
+```
+It loads ```extrinsic.pt```, the scaled result is stored in tensor ```extrinsic_scaled.pt```. Extrinsic tracks camera position as a series of tensor:
+  * `t_extrinsic_scaled[0]` column refers to x-axis (right)
+  * `t_extrinsic_scaled[1]` is y-axis (towards)
+  * `t_extrinsic_scaled[2]` is z-axis (up)
+This will be plotted later for trajectory visualisation.
+
+### 5. Scale point cloud
 Now scale factor is multiplied to the point cloud `predictions.pt` in script `vggt/scale_pointcloud.py`, with `extrinsics.pt` also being multiplied.
 
 To run it:
 
 ```bash
 cd vggt
-source .venv/bin/activate
+
 uv run scale_pointcloud.py
 ```
 
-This script updates the two tensors into calibrated version regarding the real world distance.
+This script updates the two tensors into calibrated version regarding the real world distance. The result is saved in ```sonata/scaled_sonata_points.pt```. We also store another copy of scaled floor point coordinates ```sonata/scaled_floor_coords.pt```segmented in the point cloud, for later use of visualisation.
 
-### 3. Get target object distance & coordinates
-
-We obtain a 3D point cloud with denormalized scale -- same as real world distance. Now, we are able to select the coordinates of our target object.
+### 6. Get target object distance & coordinates
+We obtain a 3D point cloud with denormalized scale -- same as real world distance. Now, we are able to select the coordinates of our target object. The inputs are ```sonata/scaled_sonata_points.pt``` and ```sonata/name.pt``` that stores the object category name of each point.
 
 Modify the furniture you would like to track in the view of camera, and in the proposed categories of Sonata.
 
@@ -367,7 +363,27 @@ Modify the furniture you would like to track in the view of camera, and in the p
 target = "chair"
 ```
 
-Categories proposed by Sonata are marked in `legend.html`.
+Categories proposed by Sonata are found in `legend.html` .
+
+<div align="center">
+  <img src="readme-imgs/legend1.png" width="200">
+  <img src="readme-imgs/legend2.png" width="200" height="250">
+</div>
+
+### 7. Trejectory and floor map visualisation
+After scaling both the point cloud and camera extrinsics, we can visualize the navigation space in 2D. This allows us to confirm that the floor segmentation and the camera trajectory align properly in real-world coordinates.
+
+The following script plots:
+  * Green points: Floor segmentation from the scaled point cloud
+  * Red points: Camera positions (from scaled extrinsics)
+  * Labels: X and Y axes represent distances in meters
+
+Run:
+```bash
+cd sonata
+source sonata-venv/bin/activate
+uv run construct_2Dmap.py
+```
 
 ### Le Kiwi navigation:
 
@@ -390,25 +406,20 @@ conda activate lerobot
 python examples/lekiwi/navigation.py
 ```
 
-#### Code explanation:
-
-`freeze_pose = True` refers to whether the follower arm is fixed in a certain pose intended for picture taking and navigation. You can modify `arm_action = _` according to your arm calibration.
-
+#### Code explanation: convert into robot coodinate system
 Le Kiwi does not travel in Cartesian coordinate system, the function
 
 ```python
-base_action, xy_speed, theta_speed, remaining_x_time, remaining_theta_time = robot._from_keyboard_to_base_action_vggt(
-                pressed_keys=keyboard_keys,
-                dis_y=lekiwi_dis_y,
-                dis_x=lekiwi_dis_x
-            )
+base_action, xy_speed, theta_speed, x_duration, y_duration, theta_duration = robot._from_keyboard_to_base_action_vggt(
+    pressed_keys=keyboard_keys,
+    dis_y=distance_y,
+    dis_x=distance_x
+)
 ```
-
-takes in distance output from VGGT-Sonata, converts it into forward distance and the rotation needed, then execute with `xy_speed` -- forward speed, `theta_speed` -- rotation speed, as well as the required duration to complete the distances. Duration of each movement iteration is recorded and reduced from total duration, so when the required distance is completed le Kiwi would stop.
+takes in distance output from VGGT-Sonata, converts it into forward distance and rotate 90 degrees to complete distance in y direction Duration of each movement iteration is recorded and reduced from total duration, so when the required distance is completed on time.
 
 ## Annex
-
-### Run automated script in one go:
+Run automated script in one go:
 
 The above is a proposed way to run infereces, scaling and getting target separately. However, in order to first compare real world distance with VGGT prediction for scale factor, there is a specific order of executing the files. Therefore, we propose a script to run this in a clean and simple manner in bash:
 
@@ -434,17 +445,3 @@ python examples/lekiwi/collect_arm_pose.py
 ```
 
 which stores new arm pose log in `actions.txt`.
-
-### Relocate camera position trajectory
-
-We also propose a functionality to view the camera trajectory with camera extrinsics. Extrinsics tell where the camera is (its position) and which way it’s facing (its orientation) relative to the world. Extrinsics store the camera location and the direction of camera that is pointing. When you have extrinsics for each frame, you can rebuild the camera’s path which is the trajectory.
-
-It refers to robot translation in the pipeline. It is located at:
-
-```bash
-cd vggt/vggt_inference.py
-```
-
-Extrinsic tracks camera position as a series of tensor. You can then plot it to visualise.
-
-`t_extrinsic_scaled[0]` column refers to x-axis (right), `t_extrinsic_scaled[1]` is y-axis (towards), `t_extrinsic_scaled[2]` is z-axis (up).

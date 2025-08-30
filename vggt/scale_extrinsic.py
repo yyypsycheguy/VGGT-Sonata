@@ -49,19 +49,10 @@ if __name__ == "__main__":
     print(f'Previous scale factor: {sf}\n')
 
     # Scale extrinsics
-    extrinsics = torch.load("../vggt/extrinsic.pt")
+    extrinsics = torch.load("extrinsic.pt")
     scaled_extrinsics = extrinsic_scaling(extrinsics, sf)
     scaled_extrinsics = torch.tensor(scaled_extrinsics, dtype=torch.float32)
     print(f"Extrinsics: {scaled_extrinsics}")
 
     torch.save(scaled_extrinsics, "extrinsic_scaled.pt")
     print(f"Scaled extrinsics by factor {sf}, saved to extrinsic_scaled.pt\n")
-
-    # concatenate with rotation matrix
-    extrinsics_rot = extrinsics[:, :3, :3]
-    extrinsics_rot = extrinsics_rot.to(scaled_extrinsics.device)
-    extrinsics_scaled = torch.cat((extrinsics_rot, scaled_extrinsics), dim=2)
-    print(f"Complete scaled extrinsics: {extrinsics_scaled}")
-
-    torch.save(extrinsics_scaled, "extrinsic_scaled_complete.pt")
-    print(f"Complete scaled translation with rotation matrix, saved to extrinsic_scaled_complete.pt\n")

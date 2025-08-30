@@ -22,7 +22,6 @@ if __name__ == "__main__":
     print(f"Loaded names")
 
     # get coords of target class
-    frame_distance = 1.45  # modify if needed
     target = "chair"  # change to your target object name
     target_coords = get_coords_by_class(
         point, target, name
@@ -34,9 +33,6 @@ if __name__ == "__main__":
     max_index = np.argmax(abs(target_coords[:, 1]))
     max_coord = target_coords[max_index]
     print(f"Original max {target} coord: {max_coord}")
-
-    # target_forward_dis = abs(max_coord[1]) + frame_distance
-    # print(f"Calibrated max {target} depth: {target_forward_dis}")
 
     target_forward_dis = max_coord[1] 
     xy_target = max_coord[:2]
