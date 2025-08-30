@@ -10,13 +10,13 @@ from lerobot.teleoperators.so100_leader import SO100Leader, SO100LeaderConfig
 from lerobot.utils.robot_utils import busy_wait
 from lerobot.utils.visualization_utils import _init_rerun, log_rerun_data
 
-FPS = 30
 
 # Create the robot and teleoperator configurations
 robot_config = LeKiwiClientConfig(remote_ip="172.18.134.136", id="my_lekiwi")
 keyboard_config = KeyboardTeleopConfig(id="my_laptop_keyboard")
 
 robot = LeKiwiClient(robot_config)
+robot.speed_index = 2  # Start at fast
 keyboard = KeyboardTeleop(keyboard_config)
 
 # To connect you already should have this script running on LeKiwi: `python -m lerobot.robots.lekiwi.lekiwi_host --robot.id=my_awesome_kiwi`
@@ -43,8 +43,9 @@ distance_x, distance_y = values
 distance_y = -distance_y
 print(f"distance x: {distance_x}, distance y: {distance_y}")
 
-# distance_x = 1
-# distance_y = -1
+frame_count = 0
+save_every_n_frames = 70  # Save every 5 frames
+FPS = 30
 
 prev_time = time.perf_counter()
 while True:
@@ -63,6 +64,17 @@ while True:
 
     observation = robot.get_observation()
 
+    if frame_count % save_every_n_frames == 0:
+        wrist_image = observation["wrist"]
+        # Save image for VGGT
+        vggt_img_folder = "../../../vggt/images"
+        os.makedirs(vggt_img_folder, exist_ok=True)
+        vggt_image_path = os.path.join(vggt_img_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
+        cv2.imwrite(vggt_image_path, wrist_image)
+        print(f"Saved wrist camera image to {vggt_image_path}")
+
+    frame_count += 1
+
     # Freeze arm pose
     arm_action = {
         "arm_shoulder_pan.pos": 23.299418604651152,
@@ -73,19 +85,6 @@ while True:
         "arm_gripper.pos": 98.67424242424242,
     }
 
-    # Save wrist camera image
-    wrist_image = observation["wrist"]
-    wrist_folder = 'wrist_images'
-    os.makedirs(wrist_folder, exist_ok=True)
-    wrist_image_path = os.path.join(wrist_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
-    cv2.imwrite(wrist_image_path, wrist_image)
-
-    # Save image for VGGT
-    vggt_img_folder = "../../../vggt/images"
-    os.makedirs(vggt_img_folder, exist_ok=True)
-    vggt_image_path = os.path.join(vggt_img_folder, f"{time.strftime('%Y_%m_%d_%H:%M:%S')}.jpg")
-    cv2.imwrite(vggt_image_path, wrist_image)
-
     if initialise:
         keyboard_keys = keyboard.get_action()
         base_action, xy_speed, theta_speed, x_duration, y_duration, theta_duration = robot._from_keyboard_to_base_action_vggt(
@@ -94,9 +93,9 @@ while True:
             dis_x=distance_x
         )
 
-        remaining_x_time = x_duration
+        remaining_x_time = 1.5 * x_duration
         remaining_theta_time = theta_duration
-        remaining_y_time = y_duration
+        remaining_y_time = 1.5 *y_duration
 
         initialise = False
 
@@ -114,6 +113,7 @@ while True:
     else:
         base_action = {"x.vel": 0.0, "y.vel": 0.0, "theta.vel": 0.0}
 
+    log_rerun_data(observation, {**base_action})
     action = {**arm_action, **base_action}
     robot.send_action(action)
     print(f"Remaining X: {remaining_x_time:.2f}s, Theta: {remaining_theta_time:.2f}s, Y: {remaining_y_time:.2f}s\n")

@@ -30,15 +30,15 @@ if __name__ == "__main__":
     print(
         f"\nMax {target} coords: {max(target_coords[:, 1])}, min chair coords: {min(target_coords[:, 1])}"
     )
-    max_index = np.argmax(abs(target_coords[:, 1]))
-    max_coord = target_coords[max_index]
-    print(f"Original max {target} coord: {max_coord}")
+    min_index = np.argmin(abs(target_coords[:, 1]))
+    min_coord = target_coords[min_index]
+    print(f"Original max {target} coord: {min_coord}")
 
-    target_forward_dis = max_coord[1] 
-    xy_target = max_coord[:2]
+    target_forward_dis = min_coord[1] 
+    xy_target = min_coord[:2]
     print(f"Calibrated {target} coord xyz coordinate: {xy_target}")
 
-    target_right_dis = max_coord[0]
+    target_right_dis = min_coord[0]
 
     # Write distance ouput to dis_output.py
     output_path = os.path.abspath(

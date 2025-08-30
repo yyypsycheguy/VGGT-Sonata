@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-'''' Imports Sonata inference results and visualizes sementic segmentation '''
+"""' Imports Sonata inference results and visualizes sementic segmentation"""
 
 import numpy as np
 import open3d as o3d
@@ -20,16 +20,16 @@ import torch
 with torch.no_grad():
     torch.cuda.empty_cache()
 
-point = torch.load("sonata_points.pt")
-color = point.color.cpu().detach().numpy()
+point = torch.load("predictions.pt")
+color = point["color"].cpu().detach().numpy()
 print(point.keys())
 
 # Visualize
 pcd = o3d.geometry.PointCloud()
-points = torch.tensor(point.coord).cpu().detach().numpy()
+points = torch.tensor(point["coord"]).cpu().detach().numpy()
 # Inverse y axis
 points[:, 1] = -points[:, 1]
 pcd.points = o3d.utility.Vector3dVector(points)
 
-pcd.colors = o3d.utility.Vector3dVector(color / 255)
+pcd.colors = o3d.utility.Vector3dVector(color)
 o3d.visualization.draw_geometries([pcd])

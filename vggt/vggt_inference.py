@@ -41,12 +41,11 @@ for img in image_names:
     h, w, _ = im.shape
     print(f"Image height: {h}, width: {w}")
 
-    im.resize((int(w / 2), int(h / 2)))
+    #im.resize((int(w / 2), int(h / 2)))
     images.append(img)
     print(f"Image {img} resized to: {int(h / 2)}x{int(w / 2)}")
 
 images = load_and_preprocess_images(images).to(device)
-
 
 with torch.no_grad():
     with torch.cuda.amp.autocast(dtype=dtype):
@@ -146,11 +145,14 @@ def convert_vggt_to_sonata(
         "color": torch.from_numpy(colors_all).float(),
     }
 
-    return sonata_dict
+    image1={"coord": coords_cropped[0], "normal": normals_list[0], "color": colors_cropped[0]}
+
+    return sonata_dict, image1
 
 
 # Call function convert VGGT point map to SONATA format
-Sonata_format = convert_vggt_to_sonata(point_map_by_unprojection, images=images)
+Sonata_format, point_cloud_img1 = convert_vggt_to_sonata(point_map_by_unprojection, images=images)
+torch.save(point_cloud_img1, "point_cloud_img1.pt")
 
 torch.save(Sonata_format, "predictions.pt")
 print("\nSonata formatted predictions saved to predictions.pt \n")

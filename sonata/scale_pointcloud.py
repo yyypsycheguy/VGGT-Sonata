@@ -29,6 +29,7 @@ if __name__ == "__main__":
     # Scale point cloud
     point = torch.load("sonata_points.pt")
     scaled_pointcloud = scale_pointcloud(point, sf)
+    
     print(f"Point cloud coordinate range SCALE FLOOR COLOR:")
     print(f"x: {point['coord'][:, 0].min()} to {point['coord'][:, 0].max()}")
     print(f"y: {point['coord'][:, 1].min()} to {point['coord'][:, 1].max()}")

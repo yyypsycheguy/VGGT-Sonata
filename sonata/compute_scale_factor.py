@@ -39,7 +39,7 @@ def scale_coord(frame_distance: float, min_depth) -> float:
 
 if __name__ == "__main__":
     # Load predictions
-    point = torch.load("sonata_points.pt")
+    point = torch.load("../vggt/point_cloud_img1.pt")
     print(point.keys())
 
     name = torch.load("name.pt")
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     frame_distance = 1.45  # modify if needed
 
     # get overall min floor coordinate compute scale factor
-    floor_coords = get_coords_by_class(point, "floor", name)
+    floor_coords = torch.tensor(point["coord"]).cpu().detach().numpy()
     print(
         f"\nMax floor coords: {max(floor_coords[:, 1])}, min floor coords: {min(floor_coords[:, 1])}"
     )
