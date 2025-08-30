@@ -12,6 +12,7 @@ This pipeline effectively works on another robots with either cartesian coordina
 
 The pipeline reconstructs indoor scene taken from lekiwi's camera with clear segmentation of different furnitures, which are labeled in `legend.html`. Lekiwi then receives inference result and travels to the right object with accurate distance, all in zero shot.
 
+<div align='center'>
 <table>
 <tr>
   <td><img src="readme-imgs/vggt_big_scene.png"width="600" height="400"></td>
@@ -23,6 +24,7 @@ The pipeline reconstructs indoor scene taken from lekiwi's camera with clear seg
   <td><img src="readme-imgs/output.gif" width="300" height="400"></td>
   <td><img src="readme-imgs/legend.png" width="300" height="350" /></td>
 </table>
+</div>
 
 ## Installation
 
@@ -384,6 +386,9 @@ cd sonata
 source sonata-venv/bin/activate
 uv run construct_2Dmap.py
 ```
+<div align="center">
+  <img src="readme-imgs/2Dmap_floor.png" width="500">
+</div>
 
 ### Le Kiwi navigation:
 
