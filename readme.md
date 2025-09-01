@@ -259,16 +259,25 @@ source .venv/bin/activate
 uv run vggt_inference.py
 ```
 
-which takes images in `vggt/images` to run inference, then stores the predicted 3d point clouds as a pytorch tensor in `vggt/predictions.pt`.
+which takes images in `vggt/images` to run inference, then stores the predicted three pytorch tensor outputs:
+  - 3d point clouds in `vggt/predictions.pt`
+  - point cloud of the first image in ```point_cloud_img1.pt```
+  - extrinsics of the series of images in ```extrinsic.pt```
 
-Camera extrinsics is also saved as tensor in ``extrinsics.pt` for later use. Extrinsics store the camera location and the direction of camera that is pointing, which is useful to track camera positions when each images are taken.
+Extrinsics store the camera location and the direction of camera that is pointing, which is useful to track camera positions when each images are taken.
 
 <div align="center">
   <text>Point cloud visualisation by VGGT :<text>
 </div>
+
 <div align="center">
   <img src="readme-imgs/vggt_big_scene.png"width="400" height="300">
 </div>
+
+To visualise the point cloud run:
+```bash
+uv run vggt_visualisation.py
+```
 
 ### Running Sonata inference:
 
@@ -280,17 +289,7 @@ source sonata-venv/bin/activate
 uv run sonata_inference.py
 ```
 
-Enables 3d point cloud segmentation by taking input from `predictions.pt`. You shall see the predicted categories in terminal output after running inference. The predictions is saved in dictionary format in `sonata_points.pt`.
-
-To visualise the segmentation, run:
-
-```bash
-cd Sonata
-source sonata-venv/bin/activate
-uv run sonata_visualise.py
-```
-
-These two are executed by separate files loading the same point cloud tensor.
+Enables 3d point cloud segmentation by taking input from `vggt_points.pt`. You shall see the predicted categories in terminal output after running inference. The predictions is saved in dictionary format in `sonata_points.pt`.
 
 ### 3. Compute scale factor
 
@@ -304,7 +303,7 @@ source sonata-venv/bin/activate
 uv run compte_scale_factor.py
 ```
 
-We obtain the scale factor by taking the minimum point of floor along the y-axis (pointing towards us) to camera saved in `results.pt`, divided by a known distance called camera distance that depending on your camera needs to be modified. The computed scale factor is stored in ```sonata/share_var.py```.
+We obtain the scale factor by taking the minimum point of floor along the y-axis (pointing towards us) to camera saved in `vggt/point_cloud_img1.pt`(point cloud of first image in the series), divided by a known distance called camera distance that depending on your camera needs to be modified. The computed scale factor is stored in ```sonata/share_var.py```.
 
 **Parameter modification:**
 If you are using other machines/robots from lekiwi to take input pictures, you have to modify this parameter at `sonata/inference_visualize-sonata.py` which is the Sonata inference file. You need to manually measure frame_distance:
@@ -344,7 +343,7 @@ It loads ```extrinsic.pt```, the scaled result is stored in tensor ```extrinsic_
 This will be plotted later for trajectory visualisation.
 
 ### 5. Scale point cloud
-Now scale factor is multiplied to the point cloud `predictions.pt` in script `vggt/scale_pointcloud.py`, with `extrinsics.pt` also being multiplied.
+Now scale factor is multiplied to the point cloud `vggt_points.pt` in script `vggt/scale_pointcloud.py`, as well as `extrinsics.pt` is also scaled.
 
 To run it:
 
@@ -356,6 +355,15 @@ uv run scale_pointcloud.py
 
 This script updates the two tensors into calibrated version regarding the real world distance. The result is saved in ```sonata/scaled_sonata_points.pt```. We also store another copy of scaled floor point coordinates ```sonata/scaled_floor_coords.pt```segmented in the point cloud, for later use of visualisation.
 
+To visualise the segmentation of the scaled point cloud, run:
+
+```bash
+cd Sonata
+source sonata-venv/bin/activate
+uv run sonata_visualise.py
+```
+It is observed that Sonata recognises the segements better after the point cloud is scaled.
+
 ### 6. Get target object distance & coordinates
 We obtain a 3D point cloud with denormalized scale -- same as real world distance. Now, we are able to select the coordinates of our target object. The inputs are ```sonata/scaled_sonata_points.pt``` and ```sonata/name.pt``` that stores the object category name of each point.
 
@@ -364,6 +372,13 @@ Modify the furniture you would like to track in the view of camera, and in the p
 ```python
 target = "chair"
 ```
+Then run:
+```bash
+cd Sonata
+source sonata-venv/bin/activate
+uv run get_target_distance.py
+```
+You should see the target object coordinates in terminal output.
 
 Categories proposed by Sonata are found in `legend.html` .
 
@@ -386,9 +401,7 @@ cd sonata
 source sonata-venv/bin/activate
 uv run construct_2Dmap.py
 ```
-<div align="center">
-  <img src="readme-imgs/2Dmap_floor.png" width="500">
-</div>
+The output map is stored as ```2Dmap_floor.pgn``` in the working directory.
 
 ### Le Kiwi navigation:
 

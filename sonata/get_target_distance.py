@@ -1,17 +1,27 @@
 import os
-
 import numpy as np
-import open3d as o3d
 import torch
-import torch.nn as nn
-from compute_scale_factor import get_coords_by_class
-from scipy.spatial import distance
 
 import sonata
 
 print(
     "################################# Get target distance ##################################\n"
 )
+
+# ------------ get coords of selected classes ------------
+def get_coords_by_class(point, class_name, name):
+    """
+    Get coordinates of points belonging to a specific class.
+    Args:
+        point (dict): Dictionary containing point cloud data.
+        class_name (str): Name of the class to filter by.
+    Returns:
+        np.ndarray: Coordinates of points belonging to the specified class.
+    """
+    coords = torch.tensor(point["coord"]).cpu().detach().numpy()
+    mask = np.array([name[i] == class_name for i in range(len(name))])
+    return coords[mask]
+
 
 if __name__ == "__main__":
     # Load predictions

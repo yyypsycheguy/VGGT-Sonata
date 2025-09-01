@@ -2,9 +2,9 @@ import os
 
 import numpy as np
 import torch
-from compute_scale_factor import get_coords_by_class
+from get_target_distance import get_coords_by_class
 
-"""'This script scales the point cloud by the computed scale factor from sonata/scaling.py"""
+"""This script scales the point cloud by the computed scale factor from sonata/scaling.py"""
 
 print("\n############################## Scale point cloud ######################################")
 

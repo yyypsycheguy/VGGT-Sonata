@@ -15,22 +15,6 @@ print(
     "\n################################# Computing Scale Factor ##################################\n"
 )
 
-
-# ------------ get coords of selected classes ------------
-def get_coords_by_class(point, class_name, name):
-    """
-    Get coordinates of points belonging to a specific class.
-    Args:
-        point (dict): Dictionary containing point cloud data.
-        class_name (str): Name of the class to filter by.
-    Returns:
-        np.ndarray: Coordinates of points belonging to the specified class.
-    """
-    coords = torch.tensor(point["coord"]).cpu().detach().numpy()
-    mask = np.array([name[i] == class_name for i in range(len(name))])
-    return coords[mask]
-
-
 # ------------- compute scale factor -------------
 def scale_coord(frame_distance: float, min_depth) -> float:
     sf = frame_distance / min_depth
