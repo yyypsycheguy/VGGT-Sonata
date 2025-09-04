@@ -33,19 +33,16 @@ for img in os.listdir("images"):
         image_names.append(os.path.join("images", img))
 image_names = sorted(image_names)
 print(f"image names: {image_names}")
-images = []
+# images = []
 
-for img in image_names:
-    im = cv2.imread(img)
-    im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-    h, w, _ = im.shape
-    print(f"Image height: {h}, width: {w}")
+# for img in image_names:
+#     im = cv2.imread(img)
+#     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
 
-    #im.resize((int(w / 2), int(h / 2)))
-    images.append(img)
-    print(f"Image {img} resized to: {int(h / 2)}x{int(w / 2)}")
+#     images.append(im)
 
-images = load_and_preprocess_images(images).to(device)
+image_names = image_names[-1:] + image_names[:-1]  
+images = load_and_preprocess_images(image_names).to(device)
 
 with torch.no_grad():
     with torch.cuda.amp.autocast(dtype=dtype):

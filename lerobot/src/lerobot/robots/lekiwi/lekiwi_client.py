@@ -318,11 +318,20 @@ class LeKiwiClient(Robot):
         theta_speed = speed_setting["theta"]
 
         # calculate theta, convert angle to degrees
-        if dis_y != 0.0:
-            if dis_y > 0.0:
-                target_angle = -85
-            elif dis_y < 0.0:
-                target_angle = 85
+        if dis_x != 0.0 or dis_y != 0.0:
+            target_angle = math.degrees(math.atan2(dis_y, dis_x))
+
+            # ensure sign convention is correct
+            # For example: positive angle = left turn, negative angle = right turn
+            if dis_y > 0 and target_angle > 0:
+                # already correct → no change
+                pass
+            elif dis_y < 0 and target_angle < 0:
+                # already correct → no change
+                pass
+            else:
+                # flip sign if mismatch
+                target_angle = -target_angle
         else:
             target_angle = 0.0
 

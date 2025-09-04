@@ -27,6 +27,12 @@ if __name__ == "__main__":
     plt.scatter(
         extrinsics[:, 0], extrinsics[:, 1], c="red", s=50, label="Extrinsic Points"
     )
+    # Number each extrinsic point using only x, y
+    for i, (x, y) in enumerate(extrinsics[:, :2]):
+        plt.text(
+            x + 0.05, y + 0.05, str(i),
+            fontsize=8, color="black"
+        )
 
     # Axis labels
     plt.xlabel("X (meters)")

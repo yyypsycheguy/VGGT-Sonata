@@ -78,11 +78,11 @@ while True:
     # Freeze arm pose
     arm_action = {
         "arm_shoulder_pan.pos": 23.299418604651152,
-        "arm_shoulder_lift.pos": -5.021645021645028,
-        "arm_elbow_flex.pos": -77.10131758291686,
-        "arm_wrist_flex.pos": 0.2439024390243958,
-        "arm_wrist_roll.pos": -30.793650793650798,
-        "arm_gripper.pos": 98.67424242424242,
+        "arm_shoulder_lift.pos": -5.887372,
+        "arm_elbow_flex.pos": -76.09562,
+        "arm_wrist_flex.pos": 30.989012,
+        "arm_wrist_roll.pos": -90.42735,
+        "arm_gripper.pos": 98.77133,
     }
 
     if initialise:

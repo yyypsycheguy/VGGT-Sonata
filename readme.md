@@ -133,7 +133,7 @@ There are four main files that need to be executed in order respectively, clearl
 
 First step is to collect images with le kiwi wrist camera, to store images for VGGT inference. Le Kiwi is designed to run by being teleoperated, which means it needs to be connected vis SSH as well as by running the teleoperate file locally. Therefore, we need to collect images by teleoperating it. Feel free to move it around, make sure you take pictures enough for inference.
 
-Get into the directory containing the teleoperation file `lerobot/examples/lekiwi/teleoperate_collect_imgs.py`:
+Get into the directory containing the teleoperation file `lerobot/examples/lekiwi/teleoperate_collect_images.py`:
 
 ```bash
 cd lerobot
@@ -228,7 +228,7 @@ At the same time on your laptop:
 cd lerobot
 conda activate lerobot
 
-python examples/lekiwi/teleoperate_collect_imgs.py
+python examples/lekiwi/teleoperate_collect_images.py
 ```
 
 You can modify the rate of image taking in the file:
@@ -237,7 +237,7 @@ You can modify the rate of image taking in the file:
 busy_wait(max( 1.0/ FPS - interval, 0.0))  # modify FPS value, eg. FPS=1 takes 1 picture per second
 ```
 
-The images taken are stored in `vggt/images` directory. Beware to make sure the floor is in view of all images. For a 4090 GPU the maximum number of images that can run for inference is around 5-6 before encountering CUDA out of memory, depending on the resolution. For reference, 3 images with overlapping objects in each, is enough to cover modelling of a corner of hallway.
+The images taken are stored in `vggt/images` directory. Beware to make sure the floor is in view of all images. For a 4090 GPU the maximum number of images that can run for inference is around 14 before encountering CUDA out of memory, depending on the resolution. For reference, 3 up to 14 images with overlapping objects in each, is enough to cover modelling of a corner of hallway. 
 
 <div align="center">
 <table>
@@ -248,6 +248,8 @@ The images taken are stored in `vggt/images` directory. Beware to make sure the 
 </tr>
 </table>
 </div>
+
+If ever error messages show up on the Pi, unplug and replug the USBs of lekiwi cameras.
 
 ### 2. Running VGGT inference:
 
@@ -265,6 +267,8 @@ which takes images in `vggt/images` to run inference, then stores the predicted 
   - extrinsics of the series of images in ```extrinsic.pt```
 
 Extrinsics store the camera location and the direction of camera that is pointing, which is useful to track camera positions when each images are taken.
+
+VGGT generates point cloud coordinates by taking the first image (index 0) as the origin of the axes. We make use of this property to allow Lekiwi to navigate from any location. By appending the last image to the first during inference, the model reconstructs the world coordinates relative to the new position, effectively resetting the reference point.
 
 <div align="center">
   <text>Point cloud visualisation by VGGT :<text>
@@ -293,7 +297,19 @@ Enables 3d point cloud segmentation by taking input from `vggt_points.pt`. You s
 
 ### 3. Compute scale factor
 
-A drawback of VGGT point clouds is that their depth is normalised. The coordinate system is defined in regards to the first camera frame, different from the real world metric depth. This impacts robotic manipulation applications where true depth is required. Therefore, we need to compute a scale factor then apply it to our point cloud inthe pipeline.
+A drawback of VGGT point clouds is that their depth is normalised. The coordinate system is defined in regards to the first camera frame, different from the real world metric depth. This impacts robotic manipulation applications where true depth is required. 
+
+<div align="center">
+<table>
+<tr>
+  <td><img src="readme-imgs/before_scaling.png"width="250" height="200"></td>
+  <td><img src="readme-imgs/after_scaling.png" width="250" height="200" /></td>
+  <td><img src="readme-imgs/scale_factor_experiment_scene.png" width="250" height="200" /></td>
+</tr>
+</table>
+</div>
+
+We need to compute a scale factor then denormalise our point cloud with it, to acheive a good estimation of depth.
 
 To run scaling:
 
@@ -303,7 +319,7 @@ source sonata-venv/bin/activate
 uv run compte_scale_factor.py
 ```
 
-We obtain the scale factor by taking the minimum point of floor along the y-axis (pointing towards us) to camera saved in `vggt/point_cloud_img1.pt`(point cloud of first image in the series), divided by a known distance called camera distance that depending on your camera needs to be modified. The computed scale factor is stored in ```sonata/share_var.py```.
+We obtain the scale factor by taking the minimum point of floor along the y-axis (pointing towards us) to camera saved in `vggt/point_cloud_img1.pt`(point cloud of first image in the series), divided by a known distance called camera distance that depending on your camera needs to be modified. The computed scale factor is stored in ```sonata/share_var.py```. This does not need to be ran every time, it is only necessary once each session.
 
 **Parameter modification:**
 If you are using other machines/robots from lekiwi to take input pictures, you have to modify this parameter at `sonata/inference_visualize-sonata.py` which is the Sonata inference file. You need to manually measure frame_distance:
@@ -402,6 +418,10 @@ source sonata-venv/bin/activate
 uv run construct_2Dmap.py
 ```
 The output map is stored as ```2Dmap_floor.pgn``` in the working directory.
+
+<div align="center">
+  <img src="readme-imgs/2Dmap_floor.png" width="500">
+</div>
 
 ### Le Kiwi navigation:
 

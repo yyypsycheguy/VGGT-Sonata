@@ -185,21 +185,12 @@ if __name__ == "__main__":
     print(point.keys())
     point["coord"] = point["coord"].numpy()
 
-    # print the min and max coordintates of all axis
-    print(f"Point cloud coordinate range:")
-    print(f"x: {point['coord'][:, 0].min()} to {point['coord'][:, 0].max()}")
-    print(f"y: {point['coord'][:, 1].min()} to {point['coord'][:, 1].max()}")
-    print(f"z: {point['coord'][:, 2].min()} to {point['coord'][:, 2].max()}")
-
     print(f"Loaded point cloud with {len(point['coord'])} points")
 
     original_coord = point["coord"].copy()
 
     # Get the average of each axis and standard deviation
     mean = np.mean(point["coord"], axis=0)
-    std = np.std(point["coord"], axis=0)
-    print(f"Mean of each axis: {mean}")
-    print(f"Standard deviation of each axis: {std}\n")
 
     point = transform(point)
 
@@ -232,18 +223,23 @@ if __name__ == "__main__":
     point["color"] = torch.from_numpy(color).float()
     torch.save(name, "name.pt")
     print(f"Names saved to name.pt\n")
-    print(f"Point cloud coordinate range SAVING:")
-    print(f"x: {point['coord'][:, 0].min()} to {point['coord'][:, 0].max()}")
-    print(f"y: {point['coord'][:, 1].min()} to {point['coord'][:, 1].max()}")
-    print(f"z: {point['coord'][:, 2].min()} to {point['coord'][:, 2].max()}")
 
     # Multiply point by average and standard deviation to restore original scale
-    point["coord"] = point["coord"].cpu().numpy() + mean
+    x_min = point["coord"][:, 0].min()
+    x_max = point["coord"][:, 0].max()
+    y_min = point["coord"][:, 1].min()
+    y_max = point["coord"][:, 1].max()
+    z_min = point["coord"][:, 2].min()
+
+    shift = torch.tensor(
+        [(x_min + x_max) / 2, (y_min + y_max) / 2, z_min],
+        dtype=point["coord"].dtype,
+        device=point["coord"].device
+    )
+
+    # apply shift to all coords (no need for loop!)
+    point["coord"] = point["coord"] + shift
     print(f"Names saved to name.pt\n")
-    print(f"Point cloud coordinate range GRID_COORD:")
-    print(f"x: {point['coord'][:, 0].min()} to {point['coord'][:, 0].max()}")
-    print(f"y: {point['coord'][:, 1].min()} to {point['coord'][:, 1].max()}")
-    print(f"z: {point['coord'][:, 2].min()} to {point['coord'][:, 2].max()}")
 
     torch.save(point, "sonata_points.pt")
     print("Results saved to sonata_points.pt\n")
