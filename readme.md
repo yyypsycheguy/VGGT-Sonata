@@ -256,8 +256,21 @@ The images taken are stored in `vggt/images` directory. Beware to make sure the 
 </tr>
 </table>
 </div>
+Please refer to the Annex for more trouble shooting regarding how to setup the demo environment.
 
-If ever error messages show up on the Pi, unplug and replug the USBs of lekiwi cameras.
+#### **!! Trouble shooting camera connection problem:**
+Often times, cameras are not well connected to the Raspberry Pi, so we need to reboot udev. On Linux, udev is the device manager daemon, and sometimes you might want to reload or restart it (for example, after adding new rules or if a device isn’t recognized). You have a few options depending on your system:
+```bash
+# Restart the udev daemon
+sudo systemctl restart systemd-udevd
+
+# Or reload rules without fully restarting the daemon
+sudo udevadm control --reload-rules
+
+# Trigger udev to reprocess devices
+sudo udevadm trigger
+```
+
 
 ### 2. Running VGGT inference:
 
@@ -329,7 +342,15 @@ source sonata-venv/bin/activate
 uv run compte_scale_factor.py
 ```
 
-We obtain the scale factor by taking the minimum point of floor along the y-axis (pointing towards us) to camera saved in `vggt/point_cloud_img1.pt`(point cloud of first image in the series), divided by a known distance called camera distance that depending on your camera needs to be modified. The computed scale factor is stored in `sonata/share_var.py`. This does not need to be ran every time, it is only necessary once each session.
+We obtain the scale factor by taking the minimum point of floor along the y-axis (pointing towards us) to camera saved in `vggt/point_cloud_img1.pt`(point cloud of first image in the series), divided by a known distance called camera distance that depending on your camera needs to be modified. 
+
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.latex?\bg_white\text{Scale%20Factor}=\frac{\text{Max%20Measured%20Distance}}{1\sim\text{(VGGT%20depth)}}" alt="Scale Factor Formula"/>
+</p>
+* VGGT is scaled relative to 1 in depth  
+* Scale factor = distance from surface
+
+The computed scale factor is stored in `sonata/share_var.py`. This does not need to be ran every time, it is only necessary once each session.
 
 **Parameter modification:**
 If you are using other machines/robots from lekiwi to take input pictures, you have to modify this parameter at `sonata/inference_visualize-sonata.py` which is the Sonata inference file. You need to manually measure frame_distance:
@@ -482,7 +503,7 @@ takes in distance output from VGGT-Sonata, converts it into forward distance and
 
 ## Annex
 
-Run automated script in one go:
+### Run automated script in one go:
 
 The above is a proposed way to run infereces, scaling and getting target separately. However, in order to first compare real world distance with VGGT prediction for scale factor, there is a specific order of executing the files. Therefore, we propose a script to run this in a clean and simple manner in bash:
 
@@ -508,3 +529,14 @@ python examples/lekiwi/collect_arm_pose.py
 ```
 
 which stores new arm pose log in `actions.txt`.
+
+### Warning: avoid extreme intense light
+VGGT is sensitive towards light, any light patches or shadows in the scene may affect its inference. 
+
+Darker scenes have more distinctly shaped shadows from the front and panoramic scenes; whereas brighter scene have more ambiguity, resembling more a flat 2D scene, giving the RGB camera difficulties identifying depth. This is due to the nature of depth cameras, they rely on capturing how a known pattern deforms from their projected infrared light, so under intense exposure to infrared with higher light intensity, incoming beams can flood the camera infrared sensor, thus disturbing it.
+
+In one of the experiment scenes, we covered up all windows, which proves to have largely improved inference quality.
+
+<div align="center">
+  <img src="readme-imgs/setup.png" width="400">
+</div>
