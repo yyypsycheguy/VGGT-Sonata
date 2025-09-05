@@ -315,55 +315,22 @@ class LeKiwiClient(Robot):
 
         speed_setting = self.speed_levels[self.speed_index]
         xy_speed = speed_setting["xy"]
-        theta_speed = speed_setting["theta"]
 
-        # calculate theta, convert angle to degrees
-        if dis_x != 0.0 or dis_y != 0.0:
-            target_angle = math.degrees(math.atan2(dis_y, dis_x))
-
-            # ensure sign convention is correct
-            # For example: positive angle = left turn, negative angle = right turn
-            if dis_y > 0 and target_angle > 0:
-                # already correct → no change
-                pass
-            elif dis_y < 0 and target_angle < 0:
-                # already correct → no change
-                pass
-            else:
-                # flip sign if mismatch
-                target_angle = -target_angle
-        else:
-            target_angle = 0.0
-
-        # deadzone for rotation
-        DEADZONE_DEG = 5.0
-        x_cmd = 0.0
-        theta_cmd = 0.0
-        y_cmd = 0.0
-
-        if abs(target_angle) > DEADZONE_DEG:
-            theta_cmd = theta_speed if target_angle > 0 else -theta_speed
-        else:
-            if abs(dis_x) > 0.01:
-                x_cmd = xy_speed if dis_x > 0 else -xy_speed
-            if abs(dis_y) > 0.01:
-                y_cmd = xy_speed if dis_y > 0 else -xy_speed
+        x_cmd = xy_speed if dis_x > 0 else -xy_speed
+        y_cmd = xy_speed if dis_y > 0 else -xy_speed # negative y is left
 
         # estimate duration
-        theta_duration = abs(target_angle) / theta_speed
         x_duration = abs(dis_x) / xy_speed 
         y_duration = abs(dis_y) / xy_speed 
 
-        print(f"target_angle: {target_angle:.2f}°")
-        print(f"theta_duration: {theta_duration:.2f} s")
         print(f"x_duration: {x_duration:.2f} s")
         print(f"y_duration: {y_duration:.2f} s")
 
         return {
             "x.vel": x_cmd,
-            "y.vel": 0.0,
-            "theta.vel": theta_cmd,
-        }, xy_speed, theta_speed, x_duration, y_duration, theta_duration
+            "y.vel": y_cmd,
+            "theta.vel": 0.0,
+        }, xy_speed, x_duration, y_duration
 
 
 

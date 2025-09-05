@@ -32,7 +32,7 @@ if __name__ == "__main__":
     print(f"Loaded names")
 
     # get coords of target class
-    target = "chair"  # change to your target object name
+    target = "sofa"  # change to your target object name
     target_coords = get_coords_by_class(
         point, target, name
     )  # [n,3] x right,y towards,z up

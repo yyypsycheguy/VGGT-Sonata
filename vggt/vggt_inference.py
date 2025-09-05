@@ -32,13 +32,6 @@ for img in os.listdir("images"):
         image_names.append(os.path.join("images", img))
 image_names = sorted(image_names)
 print(f"image names: {image_names}")
-# images = []
-
-# for img in image_names:
-#     im = cv2.imread(img)
-#     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-
-#     images.append(im)
 
 image_names = image_names[-1:] + image_names[:-1]  
 images = load_and_preprocess_images(image_names).to(device)
