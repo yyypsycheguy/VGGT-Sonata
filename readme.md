@@ -74,13 +74,21 @@ nvcc --version
 # TORCH_VERSION: torch version of local environment (e.g., 2.5.0), check by running:
 python -c "import torch; print(torch.__version__)"
 
+# For Linux
 # Replace ${} with version you are using
 uv pip install spconv-cu${CUDA_VERSION}
+# For MacOS
+# Please checkout https://github.com/haixuantao/spconv
+
+# For Linux
 uv pip install torch-scatter -f https://data.pyg.org/whl/torch-{TORCH_VERSION}+cu${CUDA_VERSION}.html
+
+# For MacOS
+uv pip install torch_scatter --no-build-isolation
 
 # install flash attention
 uv pip install torch psutil packaging ninja
-uv pip install git+https://github.com/Dao-AILab/flash-attention.git --no-build-isolation
+uv pip install git+https://github.com/Dao-AILab/flash-attention.git --no-build-isolation # Skip for MacOS
 uv pip install huggingface_hub timm
 
 # (optional, or directly copy the sonata folder to your project)
@@ -237,7 +245,7 @@ You can modify the rate of image taking in the file:
 busy_wait(max( 1.0/ FPS - interval, 0.0))  # modify FPS value, eg. FPS=1 takes 1 picture per second
 ```
 
-The images taken are stored in `vggt/images` directory. Beware to make sure the floor is in view of all images. For a 4090 GPU the maximum number of images that can run for inference is around 14 before encountering CUDA out of memory, depending on the resolution. For reference, 3 up to 14 images with overlapping objects in each, is enough to cover modelling of a corner of hallway. 
+The images taken are stored in `vggt/images` directory. Beware to make sure the floor is in view of all images. For a 4090 GPU the maximum number of images that can run for inference is around 14 before encountering CUDA out of memory, depending on the resolution. For reference, 3 up to 14 images with overlapping objects in each, is enough to cover modelling of a corner of hallway.
 
 <div align="center">
 <table>
@@ -262,9 +270,10 @@ uv run vggt_inference.py
 ```
 
 which takes images in `vggt/images` to run inference, then stores the predicted three pytorch tensor outputs:
-  - 3d point clouds in `vggt/predictions.pt`
-  - point cloud of the first image in ```point_cloud_img1.pt```
-  - extrinsics of the series of images in ```extrinsic.pt```
+
+- 3d point clouds in `vggt/predictions.pt`
+- point cloud of the first image in `point_cloud_img1.pt`
+- extrinsics of the series of images in `extrinsic.pt`
 
 Extrinsics store the camera location and the direction of camera that is pointing, which is useful to track camera positions when each images are taken.
 
@@ -279,6 +288,7 @@ VGGT generates point cloud coordinates by taking the first image (index 0) as th
 </div>
 
 To visualise the point cloud run:
+
 ```bash
 uv run vggt_visualisation.py
 ```
@@ -297,7 +307,7 @@ Enables 3d point cloud segmentation by taking input from `vggt_points.pt`. You s
 
 ### 3. Compute scale factor
 
-A drawback of VGGT point clouds is that their depth is normalised. The coordinate system is defined in regards to the first camera frame, different from the real world metric depth. This impacts robotic manipulation applications where true depth is required. 
+A drawback of VGGT point clouds is that their depth is normalised. The coordinate system is defined in regards to the first camera frame, different from the real world metric depth. This impacts robotic manipulation applications where true depth is required.
 
 <div align="center">
 <table>
@@ -319,7 +329,7 @@ source sonata-venv/bin/activate
 uv run compte_scale_factor.py
 ```
 
-We obtain the scale factor by taking the minimum point of floor along the y-axis (pointing towards us) to camera saved in `vggt/point_cloud_img1.pt`(point cloud of first image in the series), divided by a known distance called camera distance that depending on your camera needs to be modified. The computed scale factor is stored in ```sonata/share_var.py```. This does not need to be ran every time, it is only necessary once each session.
+We obtain the scale factor by taking the minimum point of floor along the y-axis (pointing towards us) to camera saved in `vggt/point_cloud_img1.pt`(point cloud of first image in the series), divided by a known distance called camera distance that depending on your camera needs to be modified. The computed scale factor is stored in `sonata/share_var.py`. This does not need to be ran every time, it is only necessary once each session.
 
 **Parameter modification:**
 If you are using other machines/robots from lekiwi to take input pictures, you have to modify this parameter at `sonata/inference_visualize-sonata.py` which is the Sonata inference file. You need to manually measure frame_distance:
@@ -341,8 +351,8 @@ You should measure the distance from where you are holding the camera to this pa
 
 Why it matters: VGGT doesn't inherently know that the ground in the image is actually a certain distance away. To get accurate real-world measurements, we need to add this blind distance to the model’s output.
 
-
 ### 4. Scale Extrinsic to Relocate camera position trajectory
+
 We also propose a functionality to view the camera trajectory with camera extrinsics. Extrinsics tell where the camera is (its position) and which way it’s facing (its orientation) relative to the world. Extrinsics store the camera location and the direction of camera that is pointing. When you have extrinsics for each frame, you can rebuild the camera’s path which is the trajectory.
 
 It refers to robot translation in the pipeline. Run it with:
@@ -352,13 +362,16 @@ cd vggt
 source .venv/bin/activate
 uv run scale_extrinsic.py
 ```
-It loads ```extrinsic.pt```, the scaled result is stored in tensor ```extrinsic_scaled.pt```. Extrinsic tracks camera position as a series of tensor:
-  * `t_extrinsic_scaled[0]` column refers to x-axis (right)
-  * `t_extrinsic_scaled[1]` is y-axis (towards)
-  * `t_extrinsic_scaled[2]` is z-axis (up)
-This will be plotted later for trajectory visualisation.
+
+It loads `extrinsic.pt`, the scaled result is stored in tensor `extrinsic_scaled.pt`. Extrinsic tracks camera position as a series of tensor:
+
+- `t_extrinsic_scaled[0]` column refers to x-axis (right)
+- `t_extrinsic_scaled[1]` is y-axis (towards)
+- `t_extrinsic_scaled[2]` is z-axis (up)
+  This will be plotted later for trajectory visualisation.
 
 ### 5. Scale point cloud
+
 Now scale factor is multiplied to the point cloud `vggt_points.pt` in script `vggt/scale_pointcloud.py`, as well as `extrinsics.pt` is also scaled.
 
 To run it:
@@ -369,7 +382,7 @@ cd vggt
 uv run scale_pointcloud.py
 ```
 
-This script updates the two tensors into calibrated version regarding the real world distance. The result is saved in ```sonata/scaled_sonata_points.pt```. We also store another copy of scaled floor point coordinates ```sonata/scaled_floor_coords.pt```segmented in the point cloud, for later use of visualisation.
+This script updates the two tensors into calibrated version regarding the real world distance. The result is saved in `sonata/scaled_sonata_points.pt`. We also store another copy of scaled floor point coordinates `sonata/scaled_floor_coords.pt`segmented in the point cloud, for later use of visualisation.
 
 To visualise the segmentation of the scaled point cloud, run:
 
@@ -378,22 +391,27 @@ cd Sonata
 source sonata-venv/bin/activate
 uv run sonata_visualise.py
 ```
+
 It is observed that Sonata recognises the segements better after the point cloud is scaled.
 
 ### 6. Get target object distance & coordinates
-We obtain a 3D point cloud with denormalized scale -- same as real world distance. Now, we are able to select the coordinates of our target object. The inputs are ```sonata/scaled_sonata_points.pt``` and ```sonata/name.pt``` that stores the object category name of each point.
+
+We obtain a 3D point cloud with denormalized scale -- same as real world distance. Now, we are able to select the coordinates of our target object. The inputs are `sonata/scaled_sonata_points.pt` and `sonata/name.pt` that stores the object category name of each point.
 
 Modify the furniture you would like to track in the view of camera, and in the proposed categories of Sonata.
 
 ```python
 target = "chair"
 ```
+
 Then run:
+
 ```bash
 cd Sonata
 source sonata-venv/bin/activate
 uv run get_target_distance.py
 ```
+
 You should see the target object coordinates in terminal output.
 
 Categories proposed by Sonata are found in `legend.html` .
@@ -404,20 +422,24 @@ Categories proposed by Sonata are found in `legend.html` .
 </div>
 
 ### 7. Trejectory and floor map visualisation
+
 After scaling both the point cloud and camera extrinsics, we can visualize the navigation space in 2D. This allows us to confirm that the floor segmentation and the camera trajectory align properly in real-world coordinates.
 
 The following script plots:
-  * Green points: Floor segmentation from the scaled point cloud
-  * Red points: Camera positions (from scaled extrinsics)
-  * Labels: X and Y axes represent distances in meters
+
+- Green points: Floor segmentation from the scaled point cloud
+- Red points: Camera positions (from scaled extrinsics)
+- Labels: X and Y axes represent distances in meters
 
 Run:
+
 ```bash
 cd sonata
 source sonata-venv/bin/activate
 uv run construct_2Dmap.py
 ```
-The output map is stored as ```2Dmap_floor.pgn``` in the working directory.
+
+The output map is stored as `2Dmap_floor.pgn` in the working directory.
 
 <div align="center">
   <img src="readme-imgs/2Dmap_floor.png" width="500">
@@ -445,6 +467,7 @@ python examples/lekiwi/navigation.py
 ```
 
 #### Code explanation: convert into robot coodinate system
+
 Le Kiwi does not travel in Cartesian coordinate system, the function
 
 ```python
@@ -454,9 +477,11 @@ base_action, xy_speed, theta_speed, x_duration, y_duration, theta_duration = rob
     dis_x=distance_x
 )
 ```
+
 takes in distance output from VGGT-Sonata, converts it into forward distance and rotate 90 degrees to complete distance in y direction Duration of each movement iteration is recorded and reduced from total duration, so when the required distance is completed on time.
 
 ## Annex
+
 Run automated script in one go:
 
 The above is a proposed way to run infereces, scaling and getting target separately. However, in order to first compare real world distance with VGGT prediction for scale factor, there is a specific order of executing the files. Therefore, we propose a script to run this in a clean and simple manner in bash:
