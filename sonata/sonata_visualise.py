@@ -20,7 +20,7 @@ import torch
 with torch.no_grad():
     torch.cuda.empty_cache()
 
-point = torch.load("sonata_points.pt")
+point = torch.load("sonata_points.pt", weights_only=False)
 color = point.color.cpu().detach().numpy()
 print(point.keys())
 

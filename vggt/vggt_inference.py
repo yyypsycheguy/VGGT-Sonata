@@ -6,21 +6,20 @@ import numpy as np
 import torch
 
 from vggt.models.vggt import VGGT
-from vggt.utils.geometry import (
-    closed_form_inverse_se3,
-    depth_to_world_coords_points,
-    unproject_depth_map_to_point_map
-)
+from vggt.utils.geometry import unproject_depth_map_to_point_map
 from vggt.utils.load_fn import load_and_preprocess_images
 from vggt.utils.pose_enc import pose_encoding_to_extri_intri
-
 
 print("\n################################# VGGT Inference ##################################\n")
 
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+
+if torch.cuda.is_available(): 
+    dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+else:
+    dtype = torch.float16
 
 model = VGGT.from_pretrained("facebook/VGGT-1B").to(device)
 
@@ -156,4 +155,4 @@ print("\nSonata formatted predictions saved to predictions.pt \n")
 
 torch.save(extrinsic, "extrinsic.pt")
 print(f"Extrinsics: {extrinsic}")
-print(f"Extrinsics saved to extrinsic.pt\n")
+print("Extrinsics saved to extrinsic.pt\n")
