@@ -536,7 +536,3 @@ VGGT is sensitive towards light, any light patches or shadows in the scene may a
 Darker scenes have more distinctly shaped shadows from the front and panoramic scenes; whereas brighter scene have more ambiguity, resembling more a flat 2D scene, giving the RGB camera difficulties identifying depth. This is due to the nature of depth cameras, they rely on capturing how a known pattern deforms from their projected infrared light, so under intense exposure to infrared with higher light intensity, incoming beams can flood the camera infrared sensor, thus disturbing it.
 
 In one of the experiment scenes, we covered up all windows, which proves to have largely improved inference quality.
-
-<div align="center">
-  <img src="readme-imgs/setup.png" width="400">
-</div>
